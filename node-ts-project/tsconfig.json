@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+	  "target": "ES6",                      // Utiliza ES6 como objetivo de compilación
+	  "moduleResolution": "node",           // Resuelve módulos como Node.js
+	  "esModuleInterop": true,              // Permite interoperabilidad con módulos ES6
+	  "strict": false,                       // Activa el modo estricto (recomendado)
+	  "outDir": "./dist",                   // Carpeta donde se guardan los archivos compilados
+	  "rootDir": "./src",                   // Carpeta donde se encuentran los archivos fuente
+	  "skipLibCheck": true,                 // Salta la comprobación de tipos en las librerías
+	  "forceConsistentCasingInFileNames": true
+	},
+	"include": ["src"],                     // Directorio de los archivos fuente
+	"exclude": ["node_modules"]             // Excluye `node_modules`
+  }
+  

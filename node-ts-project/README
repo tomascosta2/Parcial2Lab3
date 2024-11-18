@@ -1,0 +1,3 @@
+#Correr el proyecto (cada vez que hayan cambios):
+npm run build
+node dist/index.js
