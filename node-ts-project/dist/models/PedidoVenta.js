@@ -48,6 +48,20 @@ export default class PedidoVenta {
             }
         });
     }
+    static createPedido(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const cambios = yield pool.query(`INSERT INTO pedido_venta (idcliente, fechaPedido, nroComprobante, formaPago, observaciones, totalPedido)
+				VALUES (?, ?, ?, ?, ?, ?);`, [data.idcliente, data.fechaPedido, data.nroComprobante, data.formaPago, data.observaciones, data.totalPedido]);
+                console.log("Resultados del Query: ", cambios);
+                return cambios;
+            }
+            catch (e) {
+                console.log(e);
+                return e;
+            }
+        });
+    }
     static deleteById(idPedido) {
         return __awaiter(this, void 0, void 0, function* () {
             console.log("Pedido: ", idPedido);

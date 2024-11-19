@@ -44,6 +44,14 @@ app.put('/api/editPedido/:id', (req, res) => __awaiter(void 0, void 0, void 0, f
     const cambios = yield PedidoVenta.editById(parseInt(id), data);
     res.json(cambios);
 }));
+// Crear un pedido
+app.put('/api/createPedido', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const data = req.body;
+    console.log("Creando pedido...");
+    console.log("Datos del pedido: ", data);
+    const cambios = yield PedidoVenta.createPedido(data);
+    res.json(cambios);
+}));
 // Obtener los detalles de un pedido
 app.put('/api/getDetallesById/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;

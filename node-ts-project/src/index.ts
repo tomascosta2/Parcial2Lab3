@@ -48,6 +48,19 @@ app.put('/api/editPedido/:id', async (req: Request, res: Response) => {
   res.json(cambios);
 });
 
+// Crear un pedido
+app.put('/api/createPedido', async (req: Request, res: Response) => {
+  
+  const data = req.body;
+
+  console.log("Creando pedido...")
+  console.log("Datos del pedido: ", data)
+
+  const cambios = await PedidoVenta.createPedido(data)
+
+  res.json(cambios);
+});
+
 // Obtener los detalles de un pedido
 app.put('/api/getDetallesById/:id', async (req: Request, res: Response) => {
   const { id } = req.params;

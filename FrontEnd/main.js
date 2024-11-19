@@ -132,6 +132,59 @@ const editPedidoById = async (id) => {
 	})
 }
 
+
+const createPedido = async () => {
+
+	const popUp = document.getElementById('editPop');
+	const closeModal = popUp.querySelector('#closePop');
+	popUp.classList.remove('hidden');
+	
+	const form = popUp.querySelector('#editPedidoForm');
+
+	form.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		if (confirm("Confirmar?")) {
+
+			idcliente = form.querySelector('input#idcliente').value
+			fechaPedido = form.querySelector('input#fechaPedido').value
+			nroComprobante = form.querySelector('input#nroComprobante').value
+			formaPago = form.querySelector('input#formaPago').value
+			observaciones = form.querySelector('textarea#observaciones').value
+			totalPedido = form.querySelector('input#totalPedido').value
+
+			console.log(idcliente)
+			console.log("Formulario enviado")
+			const createdPedido = await fetch(`http://localhost:3001/api/createPedido/`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					idcliente, 
+					fechaPedido, 
+					nroComprobante, 
+					formaPago, 
+					observaciones, 
+					totalPedido
+				})
+			});
+
+			if (createdPedido.ok) {
+				const responseJson = await createdPedido.json();
+				console.log('Respuesta del servidor:', responseJson);
+				window.location.reload();
+			}
+		}
+	})
+
+	// Funcion para el manejo de los detalles del pedido
+	// detalles(id)
+
+	closeModal.addEventListener('click', () => {
+		popUp.classList.add('hidden');
+	})
+}
+
 const detalles = async (pedidoId) => {
 
 	// Funcion para obtener todos los detalles del pedido
