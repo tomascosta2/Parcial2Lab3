@@ -22,15 +22,17 @@ export default class PedidoVenta {
 	// Métodos para interactuar con la base de datos
 	static async getAll() {
 		// Realiza la consulta para obtener el pedido por ID
-		const pedidos = pool.query('SELECT * FROM pedido_venta');
+		const pedidos = pool.query('SELECT * FROM pedido_venta WHERE eliminado = 0');
 		console.log("Pedidos", pedidos)
 		return pedidos;
 	}
+
 	static async getById(id: number) {
 		// Realiza la consulta para obtener el pedido por ID
 		const pedido = await pool.query('SELECT * FROM pedido_venta WHERE id = ?', [id]);
 		return pedido;
 	}
+
 	static async editById(id: number, data) {
 		try {
 			const cambios = await pool.query(
@@ -43,6 +45,26 @@ export default class PedidoVenta {
 			return cambios;
 		} catch (e) {			
 			return e;
+		}
+	}
+
+	static async deleteById(idPedido) {
+		console.log("Pedido: ", idPedido)
+		
+		try {
+			console.log("Ejecutando query delete pedido...")
+			const query = `
+				UPDATE pedido_venta
+				SET eliminado = 1
+				WHERE id = ?;
+			`;
+			
+			const pedidoEliminado = await pool.query(query, [idPedido]);
+	  		console.log("Resultado DELETE pedido: ", pedidoEliminado)
+			return pedidoEliminado;
+		} catch (e) {
+			console.log("Error insertando pedido: ", e)
+			return "Ocurrio un error en la ejecucion del Query";
 		}
 	}
 }

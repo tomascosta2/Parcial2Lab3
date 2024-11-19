@@ -52,12 +52,24 @@ app.put('/api/getDetallesById/:id', (req, res) => __awaiter(void 0, void 0, void
     console.log("Detalles obtenidos: ", detalles[0]);
     res.json({ detalles });
 }));
-// Insertar un detalle
+// Insertar un detalle en un pedido
 app.put('/api/insertDetalle', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const data = req.body;
     console.log("Datos para insertar recibidos en la URI: ", data);
     const detalle = yield PedidoVentaDetalle.insertDetalle(data);
     res.json({ detalle });
+}));
+// Eliminar un detalle
+app.put('/api/deleteDetalle/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const detalleEliminado = yield PedidoVentaDetalle.deleteDetalle(id);
+    res.json({ detalleEliminado });
+}));
+// Eliminar un pedido
+app.put('/api/deletePedido/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const detalleEliminado = yield PedidoVenta.deleteById(id);
+    res.json({ detalleEliminado });
 }));
 app.listen(port, () => {
     console.log(`Servidor escuchando en http://localhost:${port}`);

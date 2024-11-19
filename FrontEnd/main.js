@@ -40,7 +40,7 @@ window.onload = async () => {
 		<td data-id="${pedido.id}" id="totalPedido" class="p-4 border border-slate-500">${pedido.totalPedido}</td>
 		<td class="p-4 border border-slate-500">
 			<button class="p-2 bg-gray-200" id="editPedido" data-id="${pedido.id}">Editar</button>
-			<button class="p-2 bg-gray-200" id="deletePedido" data-id="${pedido.id}">Eliminar</button>		
+			<button class="p-2 bg-gray-200" onclick="deletePedidoById(${pedido.id})" data-id="${pedido.id}">Eliminar</button>		
 		</td>
 	`;
 
@@ -154,13 +154,25 @@ const detalles = async (pedidoId) => {
 		detalles.detalles[0].map((detalle) => {
 			const itemDetalle = document.createElement('li');
 			itemDetalle.classList.add('py-2')
-			itemDetalle.innerHTML = 'Id: ' + detalle.id + ' | Cantidad: ' + detalle.cantidad +  ' | Producto: ' + detalle.idproducto + ' | Subtotal: ' + detalle.subtotal + ' <span class="text-red-500 cursor-pointer">[x]</span>';
+			itemDetalle.innerHTML = 'Id: ' + detalle.id + ' | Cantidad: ' + detalle.cantidad +  ' | Producto: ' + detalle.idproducto + ' | Subtotal: ' + detalle.subtotal + ' <span class="text-red-500 cursor-pointer" id="deleteDetalle" data-id="' + detalle.id + '">[x]</span>';
 			
 			listaDeDetalles.appendChild(itemDetalle);
+		})
+
+		// Funcion para eliminar un detalle por id
+		console.log("Entra")
+		const deleteDetalleButtons = document.querySelectorAll('#deleteDetalle')
+		deleteDetalleButtons.forEach((deleteDetalleButton) => {
+			deleteDetalleButton.onclick = (e) => {
+				const detalleIdToDelete = e.target.dataset.id;
+				deleteDetalleById(detalleIdToDelete);
+				listarDetalles(pedidoId);
+			}
 		})
 	}
 	listarDetalles(pedidoId)
 
+	// Agregar un detalle desde el formulario
 	const addDetalle = document.getElementById('addDetalle')
 	addDetalle.onclick = () => {
 		console.log("IMprimer")
@@ -201,6 +213,7 @@ const detalles = async (pedidoId) => {
 
 	}
 
+
 }
 
 const crearDetalle = async (detalle) => {
@@ -212,4 +225,25 @@ const crearDetalle = async (detalle) => {
 		},
 		body: JSON.stringify({detalle})
 	})
+}
+
+const deleteDetalleById = async (id) => {
+
+	const detalleEliminado = await fetch(`http://localhost:3001/api/deleteDetalle/${id}`, {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
+}
+
+const deletePedidoById = async (id) => {
+	console.log("Eliminando pedido...")
+	const pedidoEliminado = await fetch(`http://localhost:3001/api/deletePedido/${id}`, {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	}).then(window.location.reload())
+	
 }

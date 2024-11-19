@@ -22,7 +22,7 @@ export default class PedidoVenta {
     static getAll() {
         return __awaiter(this, void 0, void 0, function* () {
             // Realiza la consulta para obtener el pedido por ID
-            const pedidos = pool.query('SELECT * FROM pedido_venta');
+            const pedidos = pool.query('SELECT * FROM pedido_venta WHERE eliminado = 0');
             console.log("Pedidos", pedidos);
             return pedidos;
         });
@@ -45,6 +45,26 @@ export default class PedidoVenta {
             }
             catch (e) {
                 return e;
+            }
+        });
+    }
+    static deleteById(idPedido) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log("Pedido: ", idPedido);
+            try {
+                console.log("Ejecutando query delete pedido...");
+                const query = `
+				UPDATE pedido_venta
+				SET eliminado = 1
+				WHERE id = ?;
+			`;
+                const pedidoEliminado = yield pool.query(query, [idPedido]);
+                console.log("Resultado DELETE pedido: ", pedidoEliminado);
+                return pedidoEliminado;
+            }
+            catch (e) {
+                console.log("Error insertando pedido: ", e);
+                return "Ocurrio un error en la ejecucion del Query";
             }
         });
     }

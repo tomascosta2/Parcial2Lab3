@@ -59,13 +59,31 @@ app.put('/api/getDetallesById/:id', async (req: Request, res: Response) => {
   res.json({ detalles });
 });
 
-// Insertar un detalle
+// Insertar un detalle en un pedido
 app.put('/api/insertDetalle', async (req: Request, res: Response) => {
   const data = req.body;
   console.log("Datos para insertar recibidos en la URI: ", data)
   const detalle = await PedidoVentaDetalle.insertDetalle(data);
 
   res.json({ detalle });
+});
+
+// Eliminar un detalle
+app.put('/api/deleteDetalle/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const detalleEliminado = await PedidoVentaDetalle.deleteDetalle(id);
+
+  res.json({ detalleEliminado });
+});
+
+// Eliminar un pedido
+app.put('/api/deletePedido/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const detalleEliminado = await PedidoVenta.deleteById(id);
+
+  res.json({ detalleEliminado });
 });
 
 
