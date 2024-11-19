@@ -135,8 +135,8 @@ const editPedidoById = async (id) => {
 const detalles = async (pedidoId) => {
 
 	// Funcion para obtener todos los detalles del pedido
-	const listarDetalles = async () => {
-		const respuestaDetalles = await fetch(`http://localhost:3001/api/getDetallesById/${pedidoId}`, {
+	const listarDetalles = async (id) => {
+		const respuestaDetalles = await fetch(`http://localhost:3001/api/getDetallesById/${id}`, {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
@@ -159,10 +159,11 @@ const detalles = async (pedidoId) => {
 			listaDeDetalles.appendChild(itemDetalle);
 		})
 	}
-	listarDetalles()
+	listarDetalles(pedidoId)
 
 	const addDetalle = document.getElementById('addDetalle')
-	addDetalle.addEventListener('click', () => {
+	addDetalle.onclick = () => {
+		console.log("IMprimer")
 		const detalleForm = document.getElementById('detalleForm')
 		detalleForm.classList.remove('hidden')
 
@@ -172,7 +173,9 @@ const detalles = async (pedidoId) => {
 			detalleForm.classList.add('hidden')
 		})
 
-		detalleForm.addEventListener('submit', (e) => {
+		console.log("Editando pedido: ", pedidoId)
+
+		detalleForm.onsubmit = (e) => {
 			e.preventDefault();
 
 			id = detalleForm.querySelector('input#id').value
@@ -182,19 +185,21 @@ const detalles = async (pedidoId) => {
 
 			console.log("Datos form: ", id, pedidoId, idProducto, cantidad, subTotal)
 
-			crearDetalle({id, idPedidoVenta: pedidoId, idProducto, cantidad, subTotal});
+			crearDetalle({id, idPedidoVenta: pedidoId, idProducto, cantidad, subTotal}).then(() => {
+				// TODO: La llama pero en la segunda vez no actualiza el pedidoId por lo que carga los detalles en el 1er pedido editado
+				console.log("Pedido editado: ", pedidoId)
+				listarDetalles(pedidoId)
+			});;
 			
 			// Limpiamos el form, actualizamos lista de detalles y cerramos el modal
 			detalleForm.querySelector('input#id').value = ''
 			detalleForm.querySelector('input#idProducto').value = ''
 			detalleForm.querySelector('input#cantidad').value = ''
 			detalleForm.querySelector('input#subTotal').value = ''
-			// TODO: La llama pero no actuliza con el detalle creado
-			listarDetalles()
 			detalleForm.classList.add('hidden')
-		})
+		}
 
-	})
+	}
 
 }
 
@@ -206,5 +211,5 @@ const crearDetalle = async (detalle) => {
 			'Content-Type': 'application/json',
 		},
 		body: JSON.stringify({detalle})
-	});
+	})
 }
