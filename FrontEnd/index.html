@@ -30,43 +30,71 @@
 	</table>
 
 	<div class="hidden w-full h-screen bg-black/30 absolute top-0 flex items-center justify-center" id="editPop">
-		<div class="p-4 bg-white shadow-lg h-[90%] w-[800px] overflow-y-scroll">
+		<div class="px-4 py-8 bg-white shadow-lg h-[90%] w-[800px] overflow-y-scroll">
 			<button class="float-right" id="closePop">[x]</button>
 			<h2 class="text-center">Editor de pedido</h2>
 			<form class="mt-4 mx-auto w-[400px]" id="editPedidoForm">
-				<div class="flex flex-col gap-2 mb-2">
+				<div class="flex flex-col gap-2 mb-4">
 					<label for="idcliente">ID Cliente</label>
 					<input type="number" id="idcliente" name="idcliente" required>
 				</div>
-				<div class="flex flex-col gap-2 mb-2">
+				<div class="flex flex-col gap-2 mb-4">
 					<label for="fechaPedido">Fecha del Pedido</label>
 					<input type="date" id="fechaPedido" name="fechaPedido" required>
 				</div>
-				<div class="flex flex-col gap-2 mb-2">
+				<div class="flex flex-col gap-2 mb-4">
 					<label for="nroComprobante">Número de Comprobante</label>
 					<input type="number" id="nroComprobante" name="nroComprobante" required>
 				</div>
-				<div class="flex flex-col gap-2 mb-2">
+				<div class="flex flex-col gap-2 mb-4">
 					<label for="formaPago">Forma de Pago</label>
 					<input type="text" id="formaPago" name="formaPago" required>
 				</div>
-				<div class="flex flex-col gap-2 mb-2">
+				<div class="flex flex-col gap-2 mb-4">
 					<label for="observaciones">Observaciones</label>
 					<textarea id="observaciones" name="observaciones"></textarea>
 				</div>
-				<div class="flex flex-col gap-2 mb-2">
+				<div class="flex flex-col gap-2 mb-4">
 					<label for="detalles">Detalles</label>
 					<ul id="listaDeDetalles">
 
 					</ul>
+					<span 
+						id="addDetalle"
+						class="text-green-400 text-[14px] w-fit underline cursor-pointer"
+					>Añadir detalle +</span>
 				</div>
 				<div class="flex flex-col gap-2">
 					<label for="totalPedido">Total Pedido</label>
 					<input type="number" id="totalPedido" name="totalPedido" required>
 				</div>
-				<button class="block w-fit mt-4 mx-auto bg-green-400 text-white p-2" type="submit">Guardar cambios</button>
+				<button class="block w-fit font-bold mt-4 mx-auto bg-green-400 text-white p-2" type="submit">Guardar cambios</button>
 			</form>
 		</div>
+		<form class="hidden bg-red-400 p-4 absolute" id="detalleForm">
+			<div class="flex flex-col gap-2 mb-4">
+				<label for="id">Id</label>
+				<input type="number" id="id" name="id" required>
+			</div>
+			<div class="flex flex-col gap-2 mb-4">
+				<label for="idPedidoVenta">Id Pedido Venta</label>
+				<input type="number" disabled id="idPedidoVenta" name="idPedidoVenta" required>
+			</div>
+			<div class="flex flex-col gap-2 mb-4">
+				<label for="idProducto">Id Producto</label>
+				<input type="number" id="idProducto" name="idProducto" required>
+			</div>
+			<div class="flex flex-col gap-2 mb-4">
+				<label for="cantidad">Cantidad</label>
+				<input type="number" id="cantidad" name="cantidad" required>
+			</div>
+			<div class="flex flex-col gap-2">
+				<label for="subTotal">Subtotal</label>
+				<input type="number" id="subTotal" name="subTotal" required>
+			</div>
+			<button class="block w-fit font-bold mt-4 mx-auto bg-green-400 text-white p-2" type="submit">Agregar detalle</button>
+			<span id="closeDetalleForm" class="text-center block underline mt-2 cursor-pointer">Cancelar</span>
+		</form>
 	</div>
 
 </body>

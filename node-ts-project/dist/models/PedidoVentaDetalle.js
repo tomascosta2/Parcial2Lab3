@@ -24,4 +24,24 @@ export class PedidoVentaDetalle {
             return detalles;
         });
     }
+    static insertDetalle(detalleData) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log("Detalle: ", detalleData); // Detalle:  { detalle: { id: '4', idProducto: '1', cantidad: '1', subTotal: '1' } }
+            const { id, idPedidoVenta, idProducto, cantidad, subTotal } = detalleData.detalle;
+            try {
+                console.log("Ejecutando query insert detalle...");
+                const query = `
+				INSERT INTO pedido_venta_detalle (id, idPedidoVenta, idProducto, cantidad, subTotal)
+				VALUES (?, ?, ?, ?, ?)
+			`;
+                const detalle = yield pool.query(query, [id, idPedidoVenta, idProducto, cantidad, subTotal]);
+                console.log("Resultado INSERT detalle: ", detalle);
+                return detalle;
+            }
+            catch (e) {
+                console.log("Error insertando detalle: ", e);
+                return "Ocurrio un error en la ejecucion del Query";
+            }
+        });
+    }
 }

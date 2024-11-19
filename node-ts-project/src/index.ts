@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import PedidoVenta from './models/PedidoVenta.js';
+import { PedidoVentaDetalle } from './models/PedidoVentaDetalle.js';
 
 const app = express();
 const port = 3001;
@@ -46,6 +47,27 @@ app.put('/api/editPedido/:id', async (req: Request, res: Response) => {
 
   res.json(cambios);
 });
+
+// Obtener los detalles de un pedido
+app.put('/api/getDetallesById/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  console.log('Obteniendo los detalles del pedido con id ', id);
+  
+  const detalles = await PedidoVentaDetalle.getByPedidoVenta(parseInt(id));
+  console.log("Detalles obtenidos: ", detalles[0])
+
+  res.json({ detalles });
+});
+
+// Insertar un detalle
+app.put('/api/insertDetalle', async (req: Request, res: Response) => {
+  const data = req.body;
+  console.log("Datos para insertar recibidos en la URI: ", data)
+  const detalle = await PedidoVentaDetalle.insertDetalle(data);
+
+  res.json({ detalle });
+});
+
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);

@@ -132,8 +132,79 @@ const editPedidoById = async (id) => {
 	})
 }
 
-const detalles = (pedidoId) => {
+const detalles = async (pedidoId) => {
 
-	
+	// Funcion para obtener todos los detalles del pedido
+	const listarDetalles = async () => {
+		const respuestaDetalles = await fetch(`http://localhost:3001/api/getDetallesById/${pedidoId}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
 
+		const detalles = await respuestaDetalles.json();
+		console.log(detalles.detalles[0])
+
+		const listaDeDetalles = document.getElementById('listaDeDetalles');
+		listaDeDetalles.innerHTML = '';
+
+		console.log(listaDeDetalles)
+
+		detalles.detalles[0].map((detalle) => {
+			const itemDetalle = document.createElement('li');
+			itemDetalle.classList.add('py-2')
+			itemDetalle.innerHTML = 'Id: ' + detalle.id + ' | Cantidad: ' + detalle.cantidad +  ' | Producto: ' + detalle.idproducto + ' | Subtotal: ' + detalle.subtotal + ' <span class="text-red-500 cursor-pointer">[x]</span>';
+			
+			listaDeDetalles.appendChild(itemDetalle);
+		})
+	}
+	listarDetalles()
+
+	const addDetalle = document.getElementById('addDetalle')
+	addDetalle.addEventListener('click', () => {
+		const detalleForm = document.getElementById('detalleForm')
+		detalleForm.classList.remove('hidden')
+
+		// El id pedido venta siempre va a ser el del pedido que estamos editando
+		detalleForm.querySelector('input#idPedidoVenta').value = pedidoId;
+		detalleForm.querySelector('span#closeDetalleForm').addEventListener('click', () => {
+			detalleForm.classList.add('hidden')
+		})
+
+		detalleForm.addEventListener('submit', (e) => {
+			e.preventDefault();
+
+			id = detalleForm.querySelector('input#id').value
+			idProducto = detalleForm.querySelector('input#idProducto').value
+			cantidad = detalleForm.querySelector('input#cantidad').value
+			subTotal = detalleForm.querySelector('input#subTotal').value
+
+			console.log("Datos form: ", id, pedidoId, idProducto, cantidad, subTotal)
+
+			crearDetalle({id, idPedidoVenta: pedidoId, idProducto, cantidad, subTotal});
+			
+			// Limpiamos el form, actualizamos lista de detalles y cerramos el modal
+			detalleForm.querySelector('input#id').value = ''
+			detalleForm.querySelector('input#idProducto').value = ''
+			detalleForm.querySelector('input#cantidad').value = ''
+			detalleForm.querySelector('input#subTotal').value = ''
+			// TODO: La llama pero no actuliza con el detalle creado
+			listarDetalles()
+			detalleForm.classList.add('hidden')
+		})
+
+	})
+
+}
+
+const crearDetalle = async (detalle) => {
+	console.log("Detalle enviado al back: ", detalle)
+	const detalleCreado = await fetch(`http://localhost:3001/api/insertDetalle`, {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({detalle})
+	});
 }

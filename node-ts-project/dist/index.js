@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import express from 'express';
 import cors from 'cors';
 import PedidoVenta from './models/PedidoVenta.js';
+import { PedidoVentaDetalle } from './models/PedidoVentaDetalle.js';
 const app = express();
 const port = 3001;
 // Habilitar CORS para permitir solicitudes desde cualquier origen (o configura solo los orígenes necesarios)
@@ -42,6 +43,21 @@ app.put('/api/editPedido/:id', (req, res) => __awaiter(void 0, void 0, void 0, f
     console.log("Pedido a editar: ", id, " \nDatos del pedido: ", data);
     const cambios = yield PedidoVenta.editById(parseInt(id), data);
     res.json(cambios);
+}));
+// Obtener los detalles de un pedido
+app.put('/api/getDetallesById/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    console.log('Obteniendo los detalles del pedido con id ', id);
+    const detalles = yield PedidoVentaDetalle.getByPedidoVenta(parseInt(id));
+    console.log("Detalles obtenidos: ", detalles[0]);
+    res.json({ detalles });
+}));
+// Insertar un detalle
+app.put('/api/insertDetalle', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const data = req.body;
+    console.log("Datos para insertar recibidos en la URI: ", data);
+    const detalle = yield PedidoVentaDetalle.insertDetalle(data);
+    res.json({ detalle });
 }));
 app.listen(port, () => {
     console.log(`Servidor escuchando en http://localhost:${port}`);
