@@ -21,15 +21,19 @@ export default class PedidoVenta {
   
 	// Métodos para interactuar con la base de datos
 	static async getAll() {
-		// Realiza la consulta para obtener el pedido por ID
 		const pedidos = pool.query('SELECT * FROM pedido_venta WHERE eliminado = 0');
 		console.log("Pedidos", pedidos)
 		return pedidos;
 	}
 
 	static async getById(id: number) {
-		// Realiza la consulta para obtener el pedido por ID
-		const pedido = await pool.query('SELECT * FROM pedido_venta WHERE id = ?', [id]);
+		const pedido = await pool.query('SELECT * FROM pedido_venta WHERE id = ? AND eliminado = 0', [id]);
+		return pedido;
+	}
+
+	static async getByDate(dates) {
+		console.log("FECHAS: ", dates.fromDate);
+		const pedido = await pool.query('SELECT * FROM pedido_venta WHERE fechaPedido BETWEEN ? AND ? AND eliminado = 0;', [dates.fromDate, dates.toDate]);
 		return pedido;
 	}
 

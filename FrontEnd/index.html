@@ -7,31 +7,48 @@
 	<title>Document</title>
 	<script src="https://cdn.tailwindcss.com"></script>
 	<script src="main.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 	<link rel="stylesheet" href="main.css">
 </head>
 
 <body class="py-[80px]">
 
-	<button class="p-2 text-white font-bold bg-green-400 block w-fit mx-auto" onclick="createPedido()">Nuevo Pedido</button>
+	<div class="max-w-[1200px] mx-auto">
+		<div class="flex justify-between">
+			<div class="flex items-center gap-8">
+				<form id="searchByIdForm">
+					<input placeholder="Id del pedido" class="bg-gray-100 p-2" type="text">
+					<button class="bg-green-400 p-2 text-white font-bold">Buscar id</button>
+				</form>
+				<form id="searchByDates">
+					<input required id="from" class="bg-gray-100 p-2" type="date">
+					<input required id="to" class="bg-gray-100 p-2" type="date">
+					<button class="bg-green-400 p-2 text-white font-bold">Buscar por fecha</button>
+				</form>
+			</div>
+			<button class="p-2 text-white font-bold bg-green-400 block w-fit ml-auto" onclick="createPedido()">Nuevo Pedido</button>
+		</div>
 
-	<table class="mt-8 mx-auto border-collapse border border-slate-500" id="pedidosTable" border="1">
-		<thead>
-			<tr>
-				<th class="p-4 border border-slate-500">ID</th>
-				<th class="p-4 border border-slate-500">ID Cliente</th>
-				<th class="p-4 border border-slate-500">Fecha Pedido</th>
-				<th class="p-4 border border-slate-500">Nro Comprobante</th>
-				<th class="p-4 border border-slate-500">Forma de Pago</th>
-				<th class="p-4 border border-slate-500">Observaciones</th>
-				<th class="p-4 border border-slate-500">Total Pedido</th>
-				<th class="p-4 border border-slate-500">Acciones</th>
-			</tr>
-		</thead>
-		<tbody>
-		</tbody>
-	</table>
+		<table class="w-full mt-8 mx-auto border-collapse border border-slate-500" id="pedidosTable" border="1">
+			<thead>
+				<tr>
+					<th class="p-4 border border-slate-500">ID</th>
+					<th class="p-4 border border-slate-500">ID Cliente</th>
+					<th class="p-4 border border-slate-500">Fecha Pedido</th>
+					<th class="p-4 border border-slate-500">Nro Comprobante</th>
+					<th class="p-4 border border-slate-500">Forma de Pago</th>
+					<th class="p-4 border border-slate-500">Observaciones</th>
+					<th class="p-4 border border-slate-500">Total Pedido</th>
+					<th class="p-4 border border-slate-500">Acciones</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+	</div>
 
-	<div class="hidden w-full h-screen bg-black/30 absolute top-0 flex items-center justify-center" id="editPop">
+	<div class="hidden w-full h-screen bg-black/30 fixed top-0 flex items-center justify-center" id="editPop">
 		<div class="px-4 py-8 bg-white shadow-lg h-[90%] w-[800px] overflow-y-scroll">
 			<button class="float-right" id="closePop">[x]</button>
 			<h2 class="text-center">Editor de pedido</h2>
@@ -56,7 +73,7 @@
 					<label for="observaciones">Observaciones</label>
 					<textarea id="observaciones" name="observaciones"></textarea>
 				</div>
-				<div class="flex flex-col gap-2 mb-4">
+				<div class="flex flex-col gap-2 mb-4" id="detallesWrapper">
 					<label for="detalles">Detalles</label>
 					<ul id="listaDeDetalles">
 
