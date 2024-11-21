@@ -18,72 +18,124 @@ export default class PedidoVenta {
         this.observaciones = observaciones;
         this.totalPedido = totalPedido;
     }
-    // Métodos para interactuar con la base de datos
+    // Obtener todos los pedidos
     static getAll() {
         return __awaiter(this, void 0, void 0, function* () {
-            const pedidos = pool.query('SELECT * FROM pedido_venta WHERE eliminado = 0');
-            console.log("Pedidos", pedidos);
+            const pedidos = yield pool.query('SELECT * FROM pedido_venta WHERE eliminado = 0');
+            console.log('Pedidos', pedidos);
             return pedidos;
         });
     }
+    // Obtener un pedido por ID
     static getById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const pedido = yield pool.query('SELECT * FROM pedido_venta WHERE id = ? AND eliminado = 0', [id]);
             return pedido;
         });
     }
+    // Obtener pedidos por rango de fechas
     static getByDate(dates) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log("FECHAS: ", dates.fromDate);
+            console.log('FECHAS: ', dates.fromDate);
             const pedido = yield pool.query('SELECT * FROM pedido_venta WHERE fechaPedido BETWEEN ? AND ? AND eliminado = 0;', [dates.fromDate, dates.toDate]);
             return pedido;
         });
     }
+    // Editar un pedido por ID con transacción
     static editById(id, data) {
         return __awaiter(this, void 0, void 0, function* () {
+            const connection = yield pool.getConnection();
             try {
-                const cambios = yield pool.query(`UPDATE pedido_venta
+                // Iniciar la transacción
+                yield connection.beginTransaction();
+                // Actualizar el pedido
+                const cambios = yield connection.query(`UPDATE pedido_venta
 				 SET idcliente = ?, fechaPedido = ?, nroComprobante = ?, formaPago = ?, observaciones = ?, totalPedido = ?
-				 WHERE id = ?`, [data.idcliente, data.fechaPedido, data.nroComprobante, data.formaPago, data.observaciones, data.totalPedido, id]);
-                console.log("Resultados del Query: ", cambios);
+				 WHERE id = ?`, [
+                    data.idcliente,
+                    data.fechaPedido,
+                    data.nroComprobante,
+                    data.formaPago,
+                    data.observaciones,
+                    data.totalPedido,
+                    id,
+                ]);
+                // Confirmar la transacción
+                yield connection.commit();
                 return cambios;
             }
-            catch (e) {
-                return e;
+            catch (error) {
+                // Revertir la transacción en caso de error
+                yield connection.rollback();
+                console.error('Error al editar el pedido:', error);
+                throw error;
+            }
+            finally {
+                // Liberar la conexión
+                connection.release();
             }
         });
     }
+    // Crear un pedido con transacción
     static createPedido(data) {
         return __awaiter(this, void 0, void 0, function* () {
+            const connection = yield pool.getConnection();
             try {
-                const cambios = yield pool.query(`INSERT INTO pedido_venta (idcliente, fechaPedido, nroComprobante, formaPago, observaciones, totalPedido)
-				VALUES (?, ?, ?, ?, ?, ?);`, [data.idcliente, data.fechaPedido, data.nroComprobante, data.formaPago, data.observaciones, data.totalPedido]);
-                console.log("Resultados del Query: ", cambios);
-                return cambios;
+                // Iniciar la transacción
+                yield connection.beginTransaction();
+                // Crear el pedido
+                const [pedidoResult] = yield connection.query(`INSERT INTO pedido_venta (idcliente, fechaPedido, nroComprobante, formaPago, observaciones, totalPedido)
+				 VALUES (?, ?, ?, ?, ?, ?);`, [data.idcliente, data.fechaPedido, data.nroComprobante, data.formaPago, data.observaciones, data.totalPedido]);
+                // Obtener el ID del pedido recién creado
+                const pedidoId = pedidoResult.insertId;
+                // Insertar los detalles del pedido
+                for (const detalle of data.detalles) {
+                    yield connection.query(`INSERT INTO pedido_venta_detalle (idPedidoVenta, idProducto, cantidad, subTotal)
+					 VALUES (?, ?, ?, ?);`, [pedidoId, detalle.idProducto, detalle.cantidad, detalle.subTotal]);
+                }
+                // Confirmar la transacción
+                yield connection.commit();
+                return { success: true, pedidoId };
             }
-            catch (e) {
-                console.log(e);
-                return e;
+            catch (error) {
+                // Revertir la transacción en caso de error
+                yield connection.rollback();
+                console.error('Error al crear pedido:', error);
+                throw error;
+            }
+            finally {
+                // Liberar la conexión
+                connection.release();
             }
         });
     }
+    // Eliminar un pedido por ID con transacción
     static deleteById(idPedido) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log("Pedido: ", idPedido);
+            const connection = yield pool.getConnection();
             try {
-                console.log("Ejecutando query delete pedido...");
+                // Iniciar la transacción
+                yield connection.beginTransaction();
+                // Marcar el pedido como eliminado
                 const query = `
 				UPDATE pedido_venta
 				SET eliminado = 1
 				WHERE id = ?;
 			`;
-                const pedidoEliminado = yield pool.query(query, [idPedido]);
-                console.log("Resultado DELETE pedido: ", pedidoEliminado);
+                const pedidoEliminado = yield connection.query(query, [idPedido]);
+                // Confirmar la transacción
+                yield connection.commit();
                 return pedidoEliminado;
             }
-            catch (e) {
-                console.log("Error insertando pedido: ", e);
-                return "Ocurrio un error en la ejecucion del Query";
+            catch (error) {
+                // Revertir la transacción en caso de error
+                yield connection.rollback();
+                console.error('Error al eliminar pedido:', error);
+                throw error;
+            }
+            finally {
+                // Liberar la conexión
+                connection.release();
             }
         });
     }

@@ -99,7 +99,7 @@ app.put('/api/deleteDetalle/:id', async (req: Request, res: Response) => {
 app.put('/api/deletePedido/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const detalleEliminado = await PedidoVenta.deleteById(id);
+  const detalleEliminado = await PedidoVenta.deleteById(parseInt(id, 10));
 
   res.json({ detalleEliminado });
 });

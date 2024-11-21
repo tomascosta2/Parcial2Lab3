@@ -79,7 +79,7 @@ app.put('/api/deleteDetalle/:id', (req, res) => __awaiter(void 0, void 0, void 0
 // Eliminar un pedido
 app.put('/api/deletePedido/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const detalleEliminado = yield PedidoVenta.deleteById(id);
+    const detalleEliminado = yield PedidoVenta.deleteById(parseInt(id, 10));
     res.json({ detalleEliminado });
 }));
 app.listen(port, () => {
