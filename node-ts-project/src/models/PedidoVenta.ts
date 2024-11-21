@@ -58,7 +58,7 @@ export default class PedidoVenta {
 				`INSERT INTO pedido_venta (idcliente, fechaPedido, nroComprobante, formaPago, observaciones, totalPedido)
 				VALUES (?, ?, ?, ?, ?, ?);`,
 				[data.idcliente, data.fechaPedido, data.nroComprobante, data.formaPago, data.observaciones, data.totalPedido]
-			  );
+			);
 			console.log("Resultados del Query: ", cambios)
 			return cambios;
 		} catch (e) {			
