@@ -24,9 +24,11 @@ window.onload = async () => {
 			<td data-id="${pedido.id}" id="observaciones" class="p-4 border border-slate-500">${pedido.observaciones}</td>
 			<td data-id="${pedido.id}" id="totalPedido" class="p-4 border border-slate-500">${pedido.totalPedido}</td>
 			<td class="p-4 border border-slate-500">
-				<button class="p-2 bg-gray-200" id="editPedido" data-id="${pedido.id}">Editar</button>
-				<button class="p-2 bg-gray-200" onclick="generatePdf(${pedido.id})" data-id="${pedido.id}">PDF</button>
-				<button class="p-2 bg-gray-200" onclick="deletePedidoById(${pedido.id})" data-id="${pedido.id}">Eliminar</button>		
+				<div class="flex gap-2">
+					<button class="p-2 bg-gray-200" id="editPedido" data-id="${pedido.id}">Editar</button>
+					<button class="p-2 bg-gray-200" onclick="generatePdf(${pedido.id})" data-id="${pedido.id}">PDF</button>
+					<button class="p-2 bg-gray-200" onclick="deletePedidoById(${pedido.id})" data-id="${pedido.id}">Eliminar</button>		
+				</div>
 			</td>`;
 
 			// Agregar la fila al tbody
@@ -213,13 +215,13 @@ const createPedido = async () => {
 	form.onsubmit = async (e) => {
 		e.preventDefault();
 		if (confirm("Confirmar?")) {
-
-			idcliente = form.querySelector('input#idcliente').value
-			fechaPedido = form.querySelector('input#fechaPedido').value
-			nroComprobante = form.querySelector('input#nroComprobante').value
-			formaPago = form.querySelector('input#formaPago').value
-			observaciones = form.querySelector('textarea#observaciones').value
-			totalPedido = form.querySelector('input#totalPedido').value
+ 
+			const idcliente = form.querySelector('input#idcliente').value
+			const fechaPedido = form.querySelector('input#fechaPedido').value
+			const nroComprobante = form.querySelector('input#nroComprobante').value
+			const formaPago = form.querySelector('input#formaPago').value
+			const observaciones = form.querySelector('textarea#observaciones').value
+			const totalPedido = form.querySelector('input#totalPedido').value
 
 			console.log(idcliente)
 			console.log("Formulario enviado")
@@ -287,8 +289,9 @@ const detalles = async (pedidoId) => {
 		deleteDetalleButtons.forEach((deleteDetalleButton) => {
 			deleteDetalleButton.onclick = (e) => {
 				const detalleIdToDelete = e.target.dataset.id;
-				deleteDetalleById(detalleIdToDelete);
-				listarDetalles(pedidoId);
+				deleteDetalleById(detalleIdToDelete).then(() => {
+					listarDetalles(pedidoId);
+				})
 			}
 		})
 	}
