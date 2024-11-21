@@ -14,11 +14,8 @@ export class Cliente {
         this.cuit = cuit;
         this.razonSocial = razonSocial;
     }
-    // Métodos para interactuar con la base de datos (por ejemplo, usando un ORM o SQL directo)
-    // Por ejemplo, un método para obtener clientes por su CUIT
     static getByCuit(cuit) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Aquí puedes hacer la consulta SQL para obtener un cliente por su CUIT
             const client = yield pool.query('SELECT * FROM cliente WHERE cuit = ?', [cuit]);
             return client;
         });

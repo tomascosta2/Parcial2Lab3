@@ -38,52 +38,87 @@ export default class PedidoVenta {
 	}
 
 	static async editById(id: number, data) {
+		const connection = await pool.getConnection(); // Obtén una conexión individual del pool
 		try {
-			const cambios = await pool.query(
+			await connection.beginTransaction(); // Inicia la transacción
+	
+			const cambios = await connection.query(
 				`UPDATE pedido_venta
 				 SET idcliente = ?, fechaPedido = ?, nroComprobante = ?, formaPago = ?, observaciones = ?, totalPedido = ?
 				 WHERE id = ?`,
-				[data.idcliente, data.fechaPedido, data.nroComprobante, data.formaPago, data.observaciones, data.totalPedido, id]
-			  );
-			console.log("Resultados del Query: ", cambios)
+				[
+					data.idcliente,
+					data.fechaPedido,
+					data.nroComprobante,
+					data.formaPago,
+					data.observaciones,
+					data.totalPedido,
+					id
+				]
+			);
+	
+			await connection.commit(); // Confirma los cambios
+			console.log("Resultados del Query: ", cambios);
+	
 			return cambios;
-		} catch (e) {			
-			return e;
+		} catch (e) {
+			await connection.rollback(); // Revierte los cambios en caso de error
+			console.error("Error en la transacción, se hizo rollback:", e);
+			throw e; // Re-lanza el error para manejo externo
+		} finally {
+			connection.release(); // Libera la conexión de vuelta al pool
 		}
 	}
 
 	static async createPedido(data) {
+		const connection = await pool.getConnection();
 		try {
-			const cambios = await pool.query(
+			await connection.beginTransaction();
+	
+			const cambios = await connection.query(
 				`INSERT INTO pedido_venta (idcliente, fechaPedido, nroComprobante, formaPago, observaciones, totalPedido)
-				VALUES (?, ?, ?, ?, ?, ?);`,
+				 VALUES (?, ?, ?, ?, ?, ?);`,
 				[data.idcliente, data.fechaPedido, data.nroComprobante, data.formaPago, data.observaciones, data.totalPedido]
 			);
-			console.log("Resultados del Query: ", cambios)
+	
+			await connection.commit();
+			console.log("Resultados del Query: ", cambios);
+	
 			return cambios;
-		} catch (e) {			
-			console.log(e)
-			return e;
+		} catch (e) {
+			await connection.rollback();
+			console.error("Error en la transacción, se hizo rollback:", e);
+			throw e;
+		} finally {
+			connection.release();
 		}
 	}
 
 	static async deleteById(idPedido) {
-		console.log("Pedido: ", idPedido)
-		
+		const connection = await pool.getConnection(); // Obtén una conexión del pool
+		console.log("Pedido: ", idPedido);
+	
 		try {
-			console.log("Ejecutando query delete pedido...")
+			await connection.beginTransaction(); // Inicia la transacción
+			console.log("Ejecutando query delete pedido...");
+	
 			const query = `
 				UPDATE pedido_venta
 				SET eliminado = 1
 				WHERE id = ?;
 			`;
-			
-			const pedidoEliminado = await pool.query(query, [idPedido]);
-	  		console.log("Resultado DELETE pedido: ", pedidoEliminado)
+	
+			const pedidoEliminado = await connection.query(query, [idPedido]);
+			console.log("Resultado DELETE pedido: ", pedidoEliminado);
+	
+			await connection.commit(); // Confirma los cambios
 			return pedidoEliminado;
 		} catch (e) {
-			console.log("Error insertando pedido: ", e)
-			return "Ocurrio un error en la ejecucion del Query";
+			await connection.rollback(); // Revierte los cambios en caso de error
+			console.error("Error en la transacción DELETE pedido: ", e);
+			throw e; // Re-lanza el error para manejo externo
+		} finally {
+			connection.release(); // Libera la conexión de vuelta al pool
 		}
 	}
 }

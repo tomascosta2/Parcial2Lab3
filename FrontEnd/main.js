@@ -363,13 +363,15 @@ const deleteDetalleById = async (id) => {
 }
 
 const deletePedidoById = async (id) => {
-	console.log("Eliminando pedido...")
-	const pedidoEliminado = await fetch(`http://localhost:3001/api/deletePedido/${id}`, {
-		method: 'PUT',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	}).then(window.location.reload())
+	if (confirm("Seguro que desea eliminar el pedido con id: " + id)) {
+		console.log("Eliminando pedido...")
+		const pedidoEliminado = await fetch(`http://localhost:3001/api/deletePedido/${id}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		}).then(window.location.reload())
+	}
 
 }
 
@@ -412,12 +414,15 @@ const generatePdf = async (pedidoId) => {
 	doc.text(`Observaciones: ${pedido.allPedidos[0][0].observaciones}`, 10, 50);
 	doc.text(`Total: $${pedido.allPedidos[0][0].totalPedido}`, 10, 60);
 
+	console.log(detalles.detalles[0])
+
 	// Agregar tabla con detalles del pedido
 	doc.autoTable({
 		startY: 70,
-		head: [['ID Producto', 'Cantidad', 'Subtotal']],
+		head: [['ID Producto', 'Nombre Producto', 'Cantidad', 'Subtotal']],
 		body: detalles.detalles[0].map((detalle) => [
 			detalle.idproducto,
+			detalle.productoDenominacion,
 			detalle.cantidad,
 			`$${detalle.subtotal}`,
 		]),

@@ -41,49 +41,79 @@ export default class PedidoVenta {
     }
     static editById(id, data) {
         return __awaiter(this, void 0, void 0, function* () {
+            const connection = yield pool.getConnection(); // Obtén una conexión individual del pool
             try {
-                const cambios = yield pool.query(`UPDATE pedido_venta
+                yield connection.beginTransaction(); // Inicia la transacción
+                const cambios = yield connection.query(`UPDATE pedido_venta
 				 SET idcliente = ?, fechaPedido = ?, nroComprobante = ?, formaPago = ?, observaciones = ?, totalPedido = ?
-				 WHERE id = ?`, [data.idcliente, data.fechaPedido, data.nroComprobante, data.formaPago, data.observaciones, data.totalPedido, id]);
+				 WHERE id = ?`, [
+                    data.idcliente,
+                    data.fechaPedido,
+                    data.nroComprobante,
+                    data.formaPago,
+                    data.observaciones,
+                    data.totalPedido,
+                    id
+                ]);
+                yield connection.commit(); // Confirma los cambios
                 console.log("Resultados del Query: ", cambios);
                 return cambios;
             }
             catch (e) {
-                return e;
+                yield connection.rollback(); // Revierte los cambios en caso de error
+                console.error("Error en la transacción, se hizo rollback:", e);
+                throw e; // Re-lanza el error para manejo externo
+            }
+            finally {
+                connection.release(); // Libera la conexión de vuelta al pool
             }
         });
     }
     static createPedido(data) {
         return __awaiter(this, void 0, void 0, function* () {
+            const connection = yield pool.getConnection();
             try {
-                const cambios = yield pool.query(`INSERT INTO pedido_venta (idcliente, fechaPedido, nroComprobante, formaPago, observaciones, totalPedido)
-				VALUES (?, ?, ?, ?, ?, ?);`, [data.idcliente, data.fechaPedido, data.nroComprobante, data.formaPago, data.observaciones, data.totalPedido]);
+                yield connection.beginTransaction();
+                const cambios = yield connection.query(`INSERT INTO pedido_venta (idcliente, fechaPedido, nroComprobante, formaPago, observaciones, totalPedido)
+				 VALUES (?, ?, ?, ?, ?, ?);`, [data.idcliente, data.fechaPedido, data.nroComprobante, data.formaPago, data.observaciones, data.totalPedido]);
+                yield connection.commit();
                 console.log("Resultados del Query: ", cambios);
                 return cambios;
             }
             catch (e) {
-                console.log(e);
-                return e;
+                yield connection.rollback();
+                console.error("Error en la transacción, se hizo rollback:", e);
+                throw e;
+            }
+            finally {
+                connection.release();
             }
         });
     }
     static deleteById(idPedido) {
         return __awaiter(this, void 0, void 0, function* () {
+            const connection = yield pool.getConnection(); // Obtén una conexión del pool
             console.log("Pedido: ", idPedido);
             try {
+                yield connection.beginTransaction(); // Inicia la transacción
                 console.log("Ejecutando query delete pedido...");
                 const query = `
 				UPDATE pedido_venta
 				SET eliminado = 1
 				WHERE id = ?;
 			`;
-                const pedidoEliminado = yield pool.query(query, [idPedido]);
+                const pedidoEliminado = yield connection.query(query, [idPedido]);
                 console.log("Resultado DELETE pedido: ", pedidoEliminado);
+                yield connection.commit(); // Confirma los cambios
                 return pedidoEliminado;
             }
             catch (e) {
-                console.log("Error insertando pedido: ", e);
-                return "Ocurrio un error en la ejecucion del Query";
+                yield connection.rollback(); // Revierte los cambios en caso de error
+                console.error("Error en la transacción DELETE pedido: ", e);
+                throw e; // Re-lanza el error para manejo externo
+            }
+            finally {
+                connection.release(); // Libera la conexión de vuelta al pool
             }
         });
     }

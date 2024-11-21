@@ -20,7 +20,20 @@ export class PedidoVentaDetalle {
     static getByPedidoVenta(idPedidoVenta) {
         return __awaiter(this, void 0, void 0, function* () {
             // Consulta para obtener los detalles de un pedido por su ID
-            const detalles = yield pool.query('SELECT * FROM pedido_venta_detalle WHERE idPedidoVenta = ? AND eliminado = 0', [idPedidoVenta]);
+            const detalles = yield pool.query(`
+		SELECT 
+			pedido_venta_detalle.*, 
+			producto.denominacion AS productoDenominacion
+		FROM 
+			pedido_venta_detalle
+		JOIN 
+			producto
+		ON 
+			pedido_venta_detalle.idProducto = producto.id
+		WHERE 
+			pedido_venta_detalle.idPedidoVenta = ? 
+			AND pedido_venta_detalle.eliminado = 0
+		`, [idPedidoVenta]);
             return detalles;
         });
     }

@@ -6,20 +6,36 @@ export class PedidoVentaDetalle {
 	idProducto: number;
 	cantidad: string;
 	subtotal: string;
-  
+
 	constructor(id: number, idPedidoVenta: number, idProducto: number, cantidad: string, subtotal: string) {
-	  this.id = id;
-	  this.idPedidoVenta = idPedidoVenta;
-	  this.idProducto = idProducto;
-	  this.cantidad = cantidad;
-	  this.subtotal = subtotal;
+		this.id = id;
+		this.idPedidoVenta = idPedidoVenta;
+		this.idProducto = idProducto;
+		this.cantidad = cantidad;
+		this.subtotal = subtotal;
 	}
-  
+
 	// Métodos para interactuar con la base de datos
 	static async getByPedidoVenta(idPedidoVenta: number) {
-	  // Consulta para obtener los detalles de un pedido por su ID
-	  const detalles = await pool.query('SELECT * FROM pedido_venta_detalle WHERE idPedidoVenta = ? AND eliminado = 0', [idPedidoVenta]);
-	  return detalles;
+		// Consulta para obtener los detalles de un pedido por su ID
+		const detalles = await pool.query(
+			`
+		SELECT 
+			pedido_venta_detalle.*, 
+			producto.denominacion AS productoDenominacion
+		FROM 
+			pedido_venta_detalle
+		JOIN 
+			producto
+		ON 
+			pedido_venta_detalle.idProducto = producto.id
+		WHERE 
+			pedido_venta_detalle.idPedidoVenta = ? 
+			AND pedido_venta_detalle.eliminado = 0
+		`,
+			[idPedidoVenta]
+		);
+		return detalles;
 	}
 
 	static async insertDetalle(detalleData) {
@@ -31,9 +47,9 @@ export class PedidoVentaDetalle {
 				INSERT INTO pedido_venta_detalle (id, idPedidoVenta, idProducto, cantidad, subTotal)
 				VALUES (?, ?, ?, ?, ?)
 			`;
-			
+
 			const detalle = await pool.query(query, [id, idPedidoVenta, idProducto, cantidad, subTotal]);
-	  		console.log("Resultado INSERT detalle: ", detalle)
+			console.log("Resultado INSERT detalle: ", detalle)
 			return detalle;
 		} catch (e) {
 			console.log("Error insertando detalle: ", e)
@@ -44,7 +60,7 @@ export class PedidoVentaDetalle {
 
 	static async deleteDetalle(idDetalle) {
 		console.log("Detalle: ", idDetalle) // Detalle:  { detalle: { id: '4', idProducto: '1', cantidad: '1', subTotal: '1' } }
-		
+
 		try {
 			console.log("Ejecutando query delete detalle...")
 			const query = `
@@ -52,15 +68,14 @@ export class PedidoVentaDetalle {
 				SET eliminado = 1
 				WHERE id = ?;
 			`;
-			
+
 			const detalleEliminado = await pool.query(query, [idDetalle]);
-	  		console.log("Resultado DELETE detalle: ", detalleEliminado)
+			console.log("Resultado DELETE detalle: ", detalleEliminado)
 			return detalleEliminado;
 		} catch (e) {
 			console.log("Error insertando detalle: ", e)
 			return "Ocurrio un error en la ejecucion del Query";
 		}
 	}
-  
-  }
-  
+
+}
