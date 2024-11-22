@@ -39,43 +39,61 @@ export class PedidoVentaDetalle {
 	}
 
 	static async insertDetalle(detalleData) {
-		console.log("Detalle: ", detalleData) // Detalle:  { detalle: { id: '4', idProducto: '1', cantidad: '1', subTotal: '1' } }
+		console.log("Detalle: ", detalleData); // Detalle: { detalle: { id: '4', idProducto: '1', cantidad: '1', subTotal: '1' } }
 		const { id, idPedidoVenta, idProducto, cantidad, subTotal } = detalleData.detalle;
+		const connection = await pool.getConnection();
+	
 		try {
-			console.log("Ejecutando query insert detalle...")
+			await connection.beginTransaction();
+			console.log("Ejecutando query insert detalle...");
+	
 			const query = `
 				INSERT INTO pedido_venta_detalle (id, idPedidoVenta, idProducto, cantidad, subTotal)
 				VALUES (?, ?, ?, ?, ?)
 			`;
-
-			const detalle = await pool.query(query, [id, idPedidoVenta, idProducto, cantidad, subTotal]);
-			console.log("Resultado INSERT detalle: ", detalle)
+	
+			const detalle = await connection.query(query, [id, idPedidoVenta, idProducto, cantidad, subTotal]);
+	
+			await connection.commit();
+			console.log("Resultado INSERT detalle: ", detalle);
+	
 			return detalle;
 		} catch (e) {
-			console.log("Error insertando detalle: ", e)
-			return "Ocurrio un error en la ejecucion del Query";
+			await connection.rollback();
+			console.error("Error insertando detalle, se hizo rollback: ", e);
+			throw e;
+		} finally {
+			connection.release();
 		}
 	}
 
-
 	static async deleteDetalle(idDetalle) {
-		console.log("Detalle: ", idDetalle) // Detalle:  { detalle: { id: '4', idProducto: '1', cantidad: '1', subTotal: '1' } }
-
+		console.log("Detalle: ", idDetalle); // Detalle: { detalle: { id: '4', idProducto: '1', cantidad: '1', subTotal: '1' } }
+		const connection = await pool.getConnection(); // Obtén una conexión individual
+	
 		try {
-			console.log("Ejecutando query delete detalle...")
+			await connection.beginTransaction(); // Inicia la transacción
+			console.log("Ejecutando query delete detalle...");
+	
 			const query = `
 				UPDATE pedido_venta_detalle
 				SET eliminado = 1
 				WHERE id = ?;
 			`;
-
-			const detalleEliminado = await pool.query(query, [idDetalle]);
-			console.log("Resultado DELETE detalle: ", detalleEliminado)
+	
+			const detalleEliminado = await connection.query(query, [idDetalle]);
+			console.log("Resultado DELETE detalle: ", detalleEliminado);
+	
+			await connection.commit(); // Confirma los cambios
 			return detalleEliminado;
 		} catch (e) {
-			console.log("Error insertando detalle: ", e)
-			return "Ocurrio un error en la ejecucion del Query";
+			await connection.rollback(); // Revierte los cambios en caso de error
+			console.error("Error eliminando detalle, se hizo rollback: ", e);
+			throw e; // Re-lanza el error para manejo externo
+		} finally {
+			connection.release(); // Libera la conexión de vuelta al pool
 		}
 	}
+	
 
 }

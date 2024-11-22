@@ -39,41 +39,55 @@ export class PedidoVentaDetalle {
     }
     static insertDetalle(detalleData) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log("Detalle: ", detalleData); // Detalle:  { detalle: { id: '4', idProducto: '1', cantidad: '1', subTotal: '1' } }
+            console.log("Detalle: ", detalleData); // Detalle: { detalle: { id: '4', idProducto: '1', cantidad: '1', subTotal: '1' } }
             const { id, idPedidoVenta, idProducto, cantidad, subTotal } = detalleData.detalle;
+            const connection = yield pool.getConnection();
             try {
+                yield connection.beginTransaction();
                 console.log("Ejecutando query insert detalle...");
                 const query = `
 				INSERT INTO pedido_venta_detalle (id, idPedidoVenta, idProducto, cantidad, subTotal)
 				VALUES (?, ?, ?, ?, ?)
 			`;
-                const detalle = yield pool.query(query, [id, idPedidoVenta, idProducto, cantidad, subTotal]);
+                const detalle = yield connection.query(query, [id, idPedidoVenta, idProducto, cantidad, subTotal]);
+                yield connection.commit();
                 console.log("Resultado INSERT detalle: ", detalle);
                 return detalle;
             }
             catch (e) {
-                console.log("Error insertando detalle: ", e);
-                return "Ocurrio un error en la ejecucion del Query";
+                yield connection.rollback();
+                console.error("Error insertando detalle, se hizo rollback: ", e);
+                throw e;
+            }
+            finally {
+                connection.release();
             }
         });
     }
     static deleteDetalle(idDetalle) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log("Detalle: ", idDetalle); // Detalle:  { detalle: { id: '4', idProducto: '1', cantidad: '1', subTotal: '1' } }
+            console.log("Detalle: ", idDetalle); // Detalle: { detalle: { id: '4', idProducto: '1', cantidad: '1', subTotal: '1' } }
+            const connection = yield pool.getConnection(); // Obtén una conexión individual
             try {
+                yield connection.beginTransaction(); // Inicia la transacción
                 console.log("Ejecutando query delete detalle...");
                 const query = `
 				UPDATE pedido_venta_detalle
 				SET eliminado = 1
 				WHERE id = ?;
 			`;
-                const detalleEliminado = yield pool.query(query, [idDetalle]);
+                const detalleEliminado = yield connection.query(query, [idDetalle]);
                 console.log("Resultado DELETE detalle: ", detalleEliminado);
+                yield connection.commit(); // Confirma los cambios
                 return detalleEliminado;
             }
             catch (e) {
-                console.log("Error insertando detalle: ", e);
-                return "Ocurrio un error en la ejecucion del Query";
+                yield connection.rollback(); // Revierte los cambios en caso de error
+                console.error("Error eliminando detalle, se hizo rollback: ", e);
+                throw e; // Re-lanza el error para manejo externo
+            }
+            finally {
+                connection.release(); // Libera la conexión de vuelta al pool
             }
         });
     }
