@@ -9,9 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { pool } from '../db.js';
 export default class PedidoVenta {
-    constructor(id, idCliente, fechaPedido, nroComprobante, formaPago, observaciones, totalPedido) {
+    constructor(id, cliente, fechaPedido, nroComprobante, formaPago, observaciones, totalPedido) {
         this.id = id;
-        this.idCliente = idCliente;
+        this.cliente = cliente;
         this.fechaPedido = fechaPedido;
         this.nroComprobante = nroComprobante;
         this.formaPago = formaPago;
@@ -21,14 +21,29 @@ export default class PedidoVenta {
     // Métodos para interactuar con la base de datos
     static getAll() {
         return __awaiter(this, void 0, void 0, function* () {
-            const pedidos = pool.query('SELECT * FROM pedido_venta WHERE eliminado = 0');
-            console.log("Pedidos", pedidos);
-            return pedidos;
+            const connection = yield pool.getConnection();
+            const [pedidos] = yield connection.query('SELECT * FROM pedido_venta JOIN cliente ON pedido_venta.idcliente = cliente.id WHERE eliminado = 0');
+            const listapedidos = [];
+            pedidos.map((pedido) => {
+                const cliente = {
+                    id: pedido.idcliente,
+                    cuit: pedido.cuit,
+                    razonSocial: pedido.razonSocial
+                };
+                listapedidos.push(new PedidoVenta(pedido.id, cliente, pedido.fechaPedido, pedido.nroComprobante, pedido.formaPago, pedido.observaciones, pedido.totalPedido));
+            });
+            console.log("Lista pedidos: ", listapedidos);
+            return listapedidos;
         });
     }
     static getById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const pedido = yield pool.query('SELECT * FROM pedido_venta WHERE id = ? AND eliminado = 0', [id]);
+            const pedido = yield pool.query(`
+			SELECT pedido_venta.*, cliente.*
+			FROM pedido_venta
+			JOIN cliente ON pedido_venta.idcliente = cliente.id
+			WHERE pedido_venta.id = ? AND pedido_venta.eliminado = 0;
+		`, [id]);
             return pedido;
         });
     }

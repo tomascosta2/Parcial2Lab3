@@ -22,7 +22,7 @@ app.post('/api/getAll', (req, res) => __awaiter(void 0, void 0, void 0, function
     const { id } = req.body;
     if (id === '') {
         const allPedidos = yield PedidoVenta.getAll();
-        console.log("Todos los pedidos: ", allPedidos);
+        // console.log("Todos los pedidos: ", allPedidos)
         res.json({ allPedidos });
     }
     else {

@@ -9,10 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { pool } from '../db.js';
 export class PedidoVentaDetalle {
-    constructor(id, idPedidoVenta, idProducto, cantidad, subtotal) {
+    constructor(id, pedidoVenta, producto, cantidad, subtotal) {
         this.id = id;
-        this.idPedidoVenta = idPedidoVenta;
-        this.idProducto = idProducto;
+        this.pedidoVenta = pedidoVenta;
+        this.producto = producto;
         this.cantidad = cantidad;
         this.subtotal = subtotal;
     }

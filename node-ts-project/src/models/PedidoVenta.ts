@@ -1,17 +1,20 @@
 import { pool } from '../db.js'
+import { Cliente } from './Cliente.js';
+import { PedidoVentaDetalle } from './PedidoVentaDetalle.js';
 
 export default class PedidoVenta {
 	id: number;
-	idCliente: number;
+	cliente: Cliente;
 	fechaPedido: Date;
 	nroComprobante: number;
 	formaPago: string;
 	observaciones: string;
 	totalPedido: number;
+	detalles: PedidoVentaDetalle[];
   
-	constructor(id: number, idCliente: number, fechaPedido: Date, nroComprobante: number, formaPago: string, observaciones: string, totalPedido: number) {
+	constructor(id: number, cliente: Cliente, fechaPedido: Date, nroComprobante: number, formaPago: string, observaciones: string, totalPedido: number) {
 	  this.id = id;
-	  this.idCliente = idCliente;
+	  this.cliente = cliente;
 	  this.fechaPedido = fechaPedido;
 	  this.nroComprobante = nroComprobante;
 	  this.formaPago = formaPago;
@@ -21,13 +24,45 @@ export default class PedidoVenta {
   
 	// Métodos para interactuar con la base de datos
 	static async getAll() {
-		const pedidos = pool.query('SELECT * FROM pedido_venta WHERE eliminado = 0');
-		console.log("Pedidos", pedidos)
-		return pedidos;
+		
+		const connection = await pool.getConnection();
+		const [pedidos]: any = await connection.query('SELECT * FROM pedido_venta JOIN cliente ON pedido_venta.idcliente = cliente.id WHERE eliminado = 0');
+
+		const listapedidos:PedidoVenta[] = [];
+		
+		pedidos.map((pedido) => {
+
+			const cliente = {
+				id: pedido.idcliente,
+				cuit: pedido.cuit,
+				razonSocial: pedido.razonSocial
+			}
+
+			listapedidos.push(
+				new PedidoVenta(
+					pedido.id, 
+					cliente, 
+					pedido.fechaPedido, 
+					pedido.nroComprobante, 
+					pedido.formaPago, 
+					pedido.observaciones, 
+					pedido.totalPedido
+				)
+			)	
+		})
+
+		console.log("Lista pedidos: ", listapedidos)
+
+		return listapedidos;
 	}
 
 	static async getById(id: number) {
-		const pedido = await pool.query('SELECT * FROM pedido_venta WHERE id = ? AND eliminado = 0', [id]);
+		const pedido = await pool.query(`
+			SELECT pedido_venta.*, cliente.*
+			FROM pedido_venta
+			JOIN cliente ON pedido_venta.idcliente = cliente.id
+			WHERE pedido_venta.id = ? AND pedido_venta.eliminado = 0;
+		`, [id]);
 		return pedido;
 	}
 

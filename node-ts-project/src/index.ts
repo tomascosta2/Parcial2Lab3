@@ -18,7 +18,7 @@ app.post('/api/getAll', async (req: Request, res: Response) => {
 
   if (id === '') {
     const allPedidos = await PedidoVenta.getAll();
-    console.log("Todos los pedidos: ", allPedidos)
+    // console.log("Todos los pedidos: ", allPedidos)
     res.json({ allPedidos });
   } else {
     const allPedidos = await PedidoVenta.getById(id);

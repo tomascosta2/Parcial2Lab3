@@ -1,16 +1,18 @@
 import { pool } from '../db.js'
+import PedidoVenta from './PedidoVenta.js';
+import { Producto } from './Producto.js';
 
 export class PedidoVentaDetalle {
 	id: number;
-	idPedidoVenta: number;
-	idProducto: number;
+	pedidoVenta: PedidoVenta;
+	producto: Producto;
 	cantidad: string;
 	subtotal: string;
 
-	constructor(id: number, idPedidoVenta: number, idProducto: number, cantidad: string, subtotal: string) {
+	constructor(id: number, pedidoVenta: PedidoVenta, producto: Producto, cantidad: string, subtotal: string) {
 		this.id = id;
-		this.idPedidoVenta = idPedidoVenta;
-		this.idProducto = idProducto;
+		this.pedidoVenta = pedidoVenta;
+		this.producto = producto;
 		this.cantidad = cantidad;
 		this.subtotal = subtotal;
 	}
@@ -46,7 +48,7 @@ export class PedidoVentaDetalle {
 		try {
 			await connection.beginTransaction();
 			console.log("Ejecutando query insert detalle...");
-	
+
 			const query = `
 				INSERT INTO pedido_venta_detalle (id, idPedidoVenta, idProducto, cantidad, subTotal)
 				VALUES (?, ?, ?, ?, ?)

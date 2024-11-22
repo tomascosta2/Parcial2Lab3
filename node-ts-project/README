@@ -1,3 +1,9 @@
-#Correr el proyecto (cada vez que hayan cambios):
+# Correr el proyecto (cada vez que hayan cambios):
 npm run build
 node dist/index.js
+
+# Tareas
+Mapear querys de PedidoVenta
+Mapear querys de PedidoVentaDetalle
+Total Automatico
+Detalles en crear

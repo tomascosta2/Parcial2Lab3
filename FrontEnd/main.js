@@ -288,10 +288,12 @@ const detalles = async (pedidoId) => {
 		const deleteDetalleButtons = document.querySelectorAll('#deleteDetalle')
 		deleteDetalleButtons.forEach((deleteDetalleButton) => {
 			deleteDetalleButton.onclick = (e) => {
-				const detalleIdToDelete = e.target.dataset.id;
-				deleteDetalleById(detalleIdToDelete).then(() => {
-					listarDetalles(pedidoId);
-				})
+				if (confirm("Eliminar detalle?")) {
+					const detalleIdToDelete = e.target.dataset.id;
+					deleteDetalleById(detalleIdToDelete).then(() => {
+						listarDetalles(pedidoId);
+					})
+				}
 			}
 		})
 	}
