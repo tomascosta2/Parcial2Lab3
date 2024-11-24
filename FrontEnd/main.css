@@ -1,5 +1,11 @@
 #editPop input,
-#editPop textarea {
+#editPop textarea,
+#editPop select {
 	background-color: #F5F5F5;
 	padding: 8px;
+}
+#editPop input:disabled,
+#editPop textarea:disabled,
+#editPop select:disabled {
+	background-color: #DDD;
 }

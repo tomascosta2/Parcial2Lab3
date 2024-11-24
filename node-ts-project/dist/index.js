@@ -11,6 +11,7 @@ import express from 'express';
 import cors from 'cors';
 import PedidoVenta from './models/PedidoVenta.js';
 import { PedidoVentaDetalle } from './models/PedidoVentaDetalle.js';
+import { Producto } from './models/Producto.js';
 const app = express();
 const port = 3001;
 // Habilitar CORS para permitir solicitudes desde cualquier origen
@@ -22,7 +23,7 @@ app.post('/api/getAll', (req, res) => __awaiter(void 0, void 0, void 0, function
     const { id } = req.body;
     if (id === '') {
         const allPedidos = yield PedidoVenta.getAll();
-        // console.log("Todos los pedidos: ", allPedidos)
+        console.log("Todos los pedidos: ", allPedidos);
         res.json({ allPedidos });
     }
     else {
@@ -56,7 +57,7 @@ app.put('/api/createPedido', (req, res) => __awaiter(void 0, void 0, void 0, fun
     res.json(cambios);
 }));
 // Obtener los detalles de un pedido
-app.put('/api/getDetallesById/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get('/api/getDetallesById/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     console.log('Obteniendo los detalles del pedido con id ', id);
     const detalles = yield PedidoVentaDetalle.getByPedidoVenta(parseInt(id));
@@ -81,6 +82,21 @@ app.put('/api/deletePedido/:id', (req, res) => __awaiter(void 0, void 0, void 0,
     const { id } = req.params;
     const detalleEliminado = yield PedidoVenta.deleteById(id);
     res.json({ detalleEliminado });
+}));
+// Obtener todos los productos
+app.get('/api/getAllProductos', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('Obteniendo todos los productos...');
+    const allProductos = yield Producto.getAll();
+    console.log("Todos los productos: ", allProductos);
+    res.json({ allProductos });
+}));
+// Cargar los detalles de un pedido
+app.put('/api/uploadPedidoDetalles', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('Cargando los detalles...');
+    const { listaDeDetalles, pedidoId } = req.body;
+    const detalles = yield PedidoVentaDetalle.uploadPedidoDetalles(listaDeDetalles, pedidoId);
+    console.log("Todos los detalles: ", detalles);
+    res.json({ detalles });
 }));
 app.listen(port, () => {
     console.log(`Servidor escuchando en http://localhost:${port}`);

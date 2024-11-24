@@ -22,43 +22,135 @@ export default class PedidoVenta {
     static getAll() {
         return __awaiter(this, void 0, void 0, function* () {
             const connection = yield pool.getConnection();
-            const [pedidos] = yield connection.query('SELECT * FROM pedido_venta JOIN cliente ON pedido_venta.idcliente = cliente.id WHERE eliminado = 0');
-            const listapedidos = [];
-            pedidos.map((pedido) => {
-                const cliente = {
-                    id: pedido.idcliente,
-                    cuit: pedido.cuit,
-                    razonSocial: pedido.razonSocial
-                };
-                listapedidos.push(new PedidoVenta(pedido.id, cliente, pedido.fechaPedido, pedido.nroComprobante, pedido.formaPago, pedido.observaciones, pedido.totalPedido));
-            });
-            console.log("Lista pedidos: ", listapedidos);
-            return listapedidos;
+            try {
+                yield connection.beginTransaction();
+                const [pedidos] = yield connection.query(`
+				SELECT
+				pedido_venta.id AS id,
+				pedido_venta.idcliente AS idcliente,
+				pedido_venta.fechaPedido,
+				pedido_venta.nroComprobante,
+				pedido_venta.formaPago,
+				pedido_venta.observaciones,
+				pedido_venta.totalPedido,
+				pedido_venta.eliminado,
+				cliente.id AS cliente_id,
+				cliente.cuit,
+				cliente.razonSocial 
+				FROM pedido_venta 
+				JOIN cliente ON pedido_venta.idcliente = cliente.id 
+				WHERE eliminado = 0`);
+                const listapedidos = [];
+                pedidos.map((pedido) => {
+                    const cliente = {
+                        id: pedido.idcliente,
+                        cuit: pedido.cuit,
+                        razonSocial: pedido.razonSocial
+                    };
+                    listapedidos.push(new PedidoVenta(pedido.id, cliente, pedido.fechaPedido, pedido.nroComprobante, pedido.formaPago, pedido.observaciones, pedido.totalPedido));
+                });
+                console.log("Lista pedidos: ", listapedidos);
+                yield connection.commit();
+                return listapedidos;
+            }
+            catch (e) {
+                yield connection.rollback();
+                return e;
+            }
         });
     }
     static getById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const pedido = yield pool.query(`
-			SELECT pedido_venta.*, cliente.*
-			FROM pedido_venta
-			JOIN cliente ON pedido_venta.idcliente = cliente.id
-			WHERE pedido_venta.id = ? AND pedido_venta.eliminado = 0;
-		`, [id]);
-            return pedido;
+            const connection = yield pool.getConnection();
+            try {
+                yield connection.beginTransaction();
+                const [pedido] = yield pool.query(`
+				SELECT
+				pedido_venta.id AS id,
+				pedido_venta.idcliente AS idcliente,
+				pedido_venta.fechaPedido,
+				pedido_venta.nroComprobante,
+				pedido_venta.formaPago,
+				pedido_venta.observaciones,
+				pedido_venta.totalPedido,
+				pedido_venta.eliminado,
+				cliente.id AS cliente_id,
+				cliente.cuit,
+				cliente.razonSocial
+				FROM pedido_venta 
+				JOIN cliente 
+				ON pedido_venta.idcliente = cliente.id 
+				WHERE pedido_venta.id = ? AND pedido_venta.eliminado = 0;
+			`, [id]);
+                const cliente = {
+                    id: pedido[0].idcliente,
+                    cuit: pedido[0].cuit,
+                    razonSocial: pedido[0].razonSocial
+                };
+                const finalPedido = new PedidoVenta(pedido[0].id, cliente, pedido[0].fechaPedido, pedido[0].nroComprobante, pedido[0].formaPago, pedido[0].observaciones, pedido[0].totalPedido);
+                yield connection.commit();
+                return finalPedido;
+            }
+            catch (e) {
+                yield connection.rollback();
+                return e;
+            }
+            finally {
+                connection.release();
+            }
         });
     }
     static getByDate(dates) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log("FECHAS: ", dates.fromDate);
-            const pedido = yield pool.query('SELECT * FROM pedido_venta WHERE fechaPedido BETWEEN ? AND ? AND eliminado = 0;', [dates.fromDate, dates.toDate]);
-            return pedido;
+            const connection = yield pool.getConnection();
+            try {
+                yield connection.beginTransaction();
+                console.log("FECHAS: ", dates.fromDate);
+                const [pedidos] = yield pool.query(`
+				SELECT 
+				pedido_venta.id AS id,
+				pedido_venta.idcliente AS idcliente,
+				pedido_venta.fechaPedido,
+				pedido_venta.nroComprobante,
+				pedido_venta.formaPago,
+				pedido_venta.observaciones,
+				pedido_venta.totalPedido,
+				pedido_venta.eliminado,
+				cliente.id AS cliente_id,
+				cliente.cuit,
+				cliente.razonSocial
+				FROM pedido_venta 
+				JOIN cliente 
+				ON pedido_venta.idcliente = cliente.id 
+				WHERE fechaPedido BETWEEN ? AND ? AND eliminado = 0;
+				`, [dates.fromDate, dates.toDate]);
+                console.log("PEDIDO POR FECHA: ", pedidos);
+                const listapedidos = [];
+                pedidos.map((pedido) => {
+                    const cliente = {
+                        id: pedido.idcliente,
+                        cuit: pedido.cuit,
+                        razonSocial: pedido.razonSocial
+                    };
+                    listapedidos.push(new PedidoVenta(pedido.id, cliente, pedido.fechaPedido, pedido.nroComprobante, pedido.formaPago, pedido.observaciones, pedido.totalPedido));
+                });
+                yield connection.commit();
+                return listapedidos;
+            }
+            catch (e) {
+                yield connection.rollback();
+                return e;
+            }
+            finally {
+                connection.release();
+            }
         });
     }
     static editById(id, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            const connection = yield pool.getConnection(); // Obtén una conexión individual del pool
+            const connection = yield pool.getConnection();
             try {
-                yield connection.beginTransaction(); // Inicia la transacción
+                yield connection.beginTransaction();
                 const cambios = yield connection.query(`UPDATE pedido_venta
 				 SET idcliente = ?, fechaPedido = ?, nroComprobante = ?, formaPago = ?, observaciones = ?, totalPedido = ?
 				 WHERE id = ?`, [
@@ -70,17 +162,17 @@ export default class PedidoVenta {
                     data.totalPedido,
                     id
                 ]);
-                yield connection.commit(); // Confirma los cambios
+                yield connection.commit();
                 console.log("Resultados del Query: ", cambios);
                 return cambios;
             }
             catch (e) {
-                yield connection.rollback(); // Revierte los cambios en caso de error
+                yield connection.rollback();
                 console.error("Error en la transacción, se hizo rollback:", e);
-                throw e; // Re-lanza el error para manejo externo
+                throw e;
             }
             finally {
-                connection.release(); // Libera la conexión de vuelta al pool
+                connection.release();
             }
         });
     }
@@ -107,10 +199,10 @@ export default class PedidoVenta {
     }
     static deleteById(idPedido) {
         return __awaiter(this, void 0, void 0, function* () {
-            const connection = yield pool.getConnection(); // Obtén una conexión del pool
+            const connection = yield pool.getConnection();
             console.log("Pedido: ", idPedido);
             try {
-                yield connection.beginTransaction(); // Inicia la transacción
+                yield connection.beginTransaction();
                 console.log("Ejecutando query delete pedido...");
                 const query = `
 				UPDATE pedido_venta
@@ -119,16 +211,16 @@ export default class PedidoVenta {
 			`;
                 const pedidoEliminado = yield connection.query(query, [idPedido]);
                 console.log("Resultado DELETE pedido: ", pedidoEliminado);
-                yield connection.commit(); // Confirma los cambios
+                yield connection.commit();
                 return pedidoEliminado;
             }
             catch (e) {
-                yield connection.rollback(); // Revierte los cambios en caso de error
+                yield connection.rollback();
                 console.error("Error en la transacción DELETE pedido: ", e);
-                throw e; // Re-lanza el error para manejo externo
+                throw e;
             }
             finally {
-                connection.release(); // Libera la conexión de vuelta al pool
+                connection.release();
             }
         });
     }

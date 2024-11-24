@@ -5,21 +5,41 @@ export class Producto {
 	codigoProducto: string;
 	denominacion: number;
 	precioVenta: number;
-  
+
 	constructor(id: number, codigoProducto: string, denominacion: number, precioVenta: number) {
-	  this.id = id;
-	  this.codigoProducto = codigoProducto;
-	  this.denominacion = denominacion;
-	  this.precioVenta = precioVenta;
+		this.id = id;
+		this.codigoProducto = codigoProducto;
+		this.denominacion = denominacion;
+		this.precioVenta = precioVenta;
 	}
-  
-	// Métodos para interactuar con la base de datos
+
 	static async getById(id: number) {
-	  // Realiza la consulta para obtener el producto por ID
-	  const producto = await pool.query('SELECT * FROM producto WHERE id = ?', [id]);
-	  return producto;
+		const connection = await pool.getConnection();
+		try {
+			await connection.beginTransaction();
+			const producto = await pool.query('SELECT * FROM producto WHERE id = ?', [id]);
+			await connection.commit();
+			return producto;
+		} catch (e) {
+			await connection.rollback();
+			return e;
+		} finally {
+			connection.release();
+		}
 	}
-  
-	// Otros métodos de CRUD pueden ser definidos aquí...
-  }
-  
+
+	static async getAll() {
+		const connection = await pool.getConnection();
+		try {
+			await connection.beginTransaction();
+			const productos = await pool.query('SELECT * FROM producto');
+			await connection.commit();
+			return productos;
+		} catch (e) {
+			await connection.rollback();
+			return e;
+		} finally {
+			connection.release();
+		}
+	}
+}

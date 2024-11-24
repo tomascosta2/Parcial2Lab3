@@ -16,25 +16,80 @@ export class PedidoVentaDetalle {
         this.cantidad = cantidad;
         this.subtotal = subtotal;
     }
-    // Métodos para interactuar con la base de datos
     static getByPedidoVenta(idPedidoVenta) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Consulta para obtener los detalles de un pedido por su ID
-            const detalles = yield pool.query(`
-		SELECT 
-			pedido_venta_detalle.*, 
-			producto.denominacion AS productoDenominacion
-		FROM 
-			pedido_venta_detalle
-		JOIN 
-			producto
-		ON 
-			pedido_venta_detalle.idProducto = producto.id
-		WHERE 
-			pedido_venta_detalle.idPedidoVenta = ? 
-			AND pedido_venta_detalle.eliminado = 0
-		`, [idPedidoVenta]);
-            return detalles;
+            const connection = yield pool.getConnection();
+            try {
+                yield connection.beginTransaction();
+                const [detalles] = yield pool.query(`
+			SELECT 
+				pvd.id AS detalleId,
+				pvd.idpedidoventa,
+				pvd.idproducto,
+				pvd.cantidad,
+				pvd.subtotal,
+				pvd.eliminado AS detalleEliminado,
+				
+				prod.codigoProducto,
+				prod.denominacion AS productoDenominacion,
+				prod.precioVenta AS productoPrecio,
+
+				pv.id AS idPedido,
+				pv.idcliente AS idCliente,
+				pv.fechaPedido,
+				pv.nroComprobante,
+				pv.formaPago,
+				pv.observaciones,
+				pv.totalPedido,
+				pv.eliminado
+			FROM 
+				pedido_venta_detalle AS pvd
+			JOIN 
+				producto AS prod
+			ON 
+				pvd.idProducto = prod.id
+			JOIN 
+				pedido_venta AS pv
+			ON 
+				pvd.idPedidoVenta = pv.id
+			WHERE 
+				pvd.idPedidoVenta = ?
+				AND pvd.eliminado = 0;
+			`, [idPedidoVenta]);
+                console.log("Detalles del pedido: ", detalles);
+                detalles.map((detalle) => {
+                    const producto = {
+                        id: detalle.idproducto,
+                        codigoProducto: detalle.codigoProducto,
+                        denominacion: detalle.productoDenominacion,
+                        precioVenta: detalle.productoPrecio
+                    };
+                    // !!! No tiene sentido agregar todo el objeto de pedido venta al detalle 
+                    // ya que cada detalle terminaria teniendo dentro todo el resto de detalles 
+                    // del pedido y ademas si estamos en este punto es porque ya obtuvimos toda la info del 
+                    // pedido.
+                    // 		const pedidoVenta = {
+                    // 			id: detalle.idpedidoventa,
+                    // 			idCliente: detalle.idCliente,
+                    // 			fechaPedido: detalle.fechaPedido,
+                    // 			nroComprobante: detalle.nroComprobante,
+                    // 			formaPago: detalle.formaPago,
+                    // 			observaciones: detalle.observaciones,
+                    // 			totalPedido: detalle.totalPedido,
+                    // 			eliminado: detalle.eliminado
+                    // 		};
+                    new PedidoVentaDetalle(detalle.id, detalle.idpedidoventa, producto, detalle.cantidad, detalle.subtotal);
+                });
+                yield connection.commit();
+                return detalles;
+            }
+            catch (e) {
+                yield connection.rollback();
+                return e;
+            }
+            finally {
+                connection.release();
+            }
         });
     }
     static insertDetalle(detalleData) {
@@ -67,9 +122,9 @@ export class PedidoVentaDetalle {
     static deleteDetalle(idDetalle) {
         return __awaiter(this, void 0, void 0, function* () {
             console.log("Detalle: ", idDetalle); // Detalle: { detalle: { id: '4', idProducto: '1', cantidad: '1', subTotal: '1' } }
-            const connection = yield pool.getConnection(); // Obtén una conexión individual
+            const connection = yield pool.getConnection();
             try {
-                yield connection.beginTransaction(); // Inicia la transacción
+                yield connection.beginTransaction();
                 console.log("Ejecutando query delete detalle...");
                 const query = `
 				UPDATE pedido_venta_detalle
@@ -78,16 +133,44 @@ export class PedidoVentaDetalle {
 			`;
                 const detalleEliminado = yield connection.query(query, [idDetalle]);
                 console.log("Resultado DELETE detalle: ", detalleEliminado);
-                yield connection.commit(); // Confirma los cambios
+                yield connection.commit();
                 return detalleEliminado;
             }
             catch (e) {
-                yield connection.rollback(); // Revierte los cambios en caso de error
+                yield connection.rollback();
                 console.error("Error eliminando detalle, se hizo rollback: ", e);
-                throw e; // Re-lanza el error para manejo externo
+                throw e;
             }
             finally {
-                connection.release(); // Libera la conexión de vuelta al pool
+                connection.release();
+            }
+        });
+    }
+    static uploadPedidoDetalles(listaDeDetalles, pedidoId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log("Detalles: ", listaDeDetalles);
+            const connection = yield pool.getConnection();
+            try {
+                yield connection.beginTransaction();
+                const detalles = [];
+                listaDeDetalles.map((d) => __awaiter(this, void 0, void 0, function* () {
+                    const query = `
+					INSERT IGNORE INTO pedido_venta_detalle (id, idpedidoventa, idproducto, cantidad, subTotal)
+					VALUES (?, ?, ?, ?, ?)
+				`;
+                    const detalle = yield connection.query(query, [d.id, pedidoId, d.producto, d.cantidad, d.subtotal]);
+                    detalles.push(detalle);
+                }));
+                yield connection.commit();
+                return detalles;
+            }
+            catch (e) {
+                yield connection.rollback();
+                console.error("Error cargando detalles, se hizo rollback: ", e);
+                throw e;
+            }
+            finally {
+                connection.release();
             }
         });
     }

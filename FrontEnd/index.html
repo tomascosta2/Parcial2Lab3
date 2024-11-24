@@ -95,13 +95,15 @@
 				<label for="id">Id</label>
 				<input type="number" id="id" name="id" required>
 			</div>
-			<div class="flex flex-col gap-2 mb-4">
+			<!-- <div class="flex flex-col gap-2 mb-4">
 				<label for="idPedidoVenta">Id Pedido Venta</label>
 				<input type="number" disabled id="idPedidoVenta" name="idPedidoVenta" required>
-			</div>
+			</div> -->
 			<div class="flex flex-col gap-2 mb-4">
-				<label for="idProducto">Id Producto</label>
-				<input type="number" id="idProducto" name="idProducto" required>
+				<label for="producto">Producto</label>
+				<select id="producto" name="producto" required>
+					<option value="0">Seleccionar</option>
+				</select>
 			</div>
 			<div class="flex flex-col gap-2 mb-4">
 				<label for="cantidad">Cantidad</label>
@@ -109,7 +111,7 @@
 			</div>
 			<div class="flex flex-col gap-2">
 				<label for="subTotal">Subtotal</label>
-				<input type="number" id="subTotal" name="subTotal" required>
+				<input type="number" id="subTotal" name="subTotal" disabled required>
 			</div>
 			<button class="block w-fit font-bold mt-4 mx-auto bg-green-400 text-white p-2" type="submit">Agregar detalle</button>
 			<span id="closeDetalleForm" class="text-center block underline mt-2 cursor-pointer">Cancelar</span>

@@ -15,12 +15,40 @@ export class Producto {
         this.denominacion = denominacion;
         this.precioVenta = precioVenta;
     }
-    // Métodos para interactuar con la base de datos
     static getById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Realiza la consulta para obtener el producto por ID
-            const producto = yield pool.query('SELECT * FROM producto WHERE id = ?', [id]);
-            return producto;
+            const connection = yield pool.getConnection();
+            try {
+                yield connection.beginTransaction();
+                const producto = yield pool.query('SELECT * FROM producto WHERE id = ?', [id]);
+                yield connection.commit();
+                return producto;
+            }
+            catch (e) {
+                yield connection.rollback();
+                return e;
+            }
+            finally {
+                connection.release();
+            }
+        });
+    }
+    static getAll() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const connection = yield pool.getConnection();
+            try {
+                yield connection.beginTransaction();
+                const productos = yield pool.query('SELECT * FROM producto');
+                yield connection.commit();
+                return productos;
+            }
+            catch (e) {
+                yield connection.rollback();
+                return e;
+            }
+            finally {
+                connection.release();
+            }
         });
     }
 }

@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import PedidoVenta from './models/PedidoVenta.js';
 import { PedidoVentaDetalle } from './models/PedidoVentaDetalle.js';
+import { Producto } from './models/Producto.js';
 
 const app = express();
 const port = 3001;
@@ -18,7 +19,7 @@ app.post('/api/getAll', async (req: Request, res: Response) => {
 
   if (id === '') {
     const allPedidos = await PedidoVenta.getAll();
-    // console.log("Todos los pedidos: ", allPedidos)
+    console.log("Todos los pedidos: ", allPedidos)
     res.json({ allPedidos });
   } else {
     const allPedidos = await PedidoVenta.getById(id);
@@ -67,7 +68,7 @@ app.put('/api/createPedido', async (req: Request, res: Response) => {
 });
 
 // Obtener los detalles de un pedido
-app.put('/api/getDetallesById/:id', async (req: Request, res: Response) => {
+app.get('/api/getDetallesById/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   console.log('Obteniendo los detalles del pedido con id ', id);
 
@@ -104,6 +105,26 @@ app.put('/api/deletePedido/:id', async (req: Request, res: Response) => {
   res.json({ detalleEliminado });
 });
 
+// Obtener todos los productos
+app.get('/api/getAllProductos', async (req: Request, res: Response) => {
+  console.log('Obteniendo todos los productos...');
+  
+  const allProductos = await Producto.getAll();
+  console.log("Todos los productos: ", allProductos)
+  res.json({ allProductos });
+
+});
+
+// Cargar los detalles de un pedido
+app.put('/api/uploadPedidoDetalles', async (req: Request, res: Response) => {
+  console.log('Cargando los detalles...');
+  const {listaDeDetalles, pedidoId} = req.body;
+
+  const detalles = await PedidoVentaDetalle.uploadPedidoDetalles(listaDeDetalles, pedidoId);
+  console.log("Todos los detalles: ", detalles)
+  res.json({ detalles });
+
+});
 
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);

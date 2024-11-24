@@ -26,56 +26,169 @@ export default class PedidoVenta {
 	static async getAll() {
 		
 		const connection = await pool.getConnection();
-		const [pedidos]: any = await connection.query('SELECT * FROM pedido_venta JOIN cliente ON pedido_venta.idcliente = cliente.id WHERE eliminado = 0');
+		try {
+			await connection.beginTransaction();
+			const [pedidos]: any = await connection.query(`
+				SELECT
+				pedido_venta.id AS id,
+				pedido_venta.idcliente AS idcliente,
+				pedido_venta.fechaPedido,
+				pedido_venta.nroComprobante,
+				pedido_venta.formaPago,
+				pedido_venta.observaciones,
+				pedido_venta.totalPedido,
+				pedido_venta.eliminado,
+				cliente.id AS cliente_id,
+				cliente.cuit,
+				cliente.razonSocial 
+				FROM pedido_venta 
+				JOIN cliente ON pedido_venta.idcliente = cliente.id 
+				WHERE eliminado = 0`);
 
-		const listapedidos:PedidoVenta[] = [];
+			const listapedidos:PedidoVenta[] = [];
 		
-		pedidos.map((pedido) => {
-
-			const cliente = {
-				id: pedido.idcliente,
-				cuit: pedido.cuit,
-				razonSocial: pedido.razonSocial
-			}
-
-			listapedidos.push(
-				new PedidoVenta(
-					pedido.id, 
-					cliente, 
-					pedido.fechaPedido, 
-					pedido.nroComprobante, 
-					pedido.formaPago, 
-					pedido.observaciones, 
-					pedido.totalPedido
-				)
-			)	
-		})
-
-		console.log("Lista pedidos: ", listapedidos)
-
-		return listapedidos;
+			pedidos.map((pedido) => {
+	
+				const cliente = {
+					id: pedido.idcliente,
+					cuit: pedido.cuit,
+					razonSocial: pedido.razonSocial
+				}
+	
+				listapedidos.push(
+					new PedidoVenta(
+						pedido.id, 
+						cliente, 
+						pedido.fechaPedido, 
+						pedido.nroComprobante, 
+						pedido.formaPago, 
+						pedido.observaciones, 
+						pedido.totalPedido
+					)
+				)	
+			})
+	
+			console.log("Lista pedidos: ", listapedidos)
+	
+			await connection.commit();
+			return listapedidos;
+		} catch (e) {
+			await connection.rollback();
+			return e;
+		}
 	}
 
 	static async getById(id: number) {
-		const pedido = await pool.query(`
-			SELECT pedido_venta.*, cliente.*
-			FROM pedido_venta
-			JOIN cliente ON pedido_venta.idcliente = cliente.id
-			WHERE pedido_venta.id = ? AND pedido_venta.eliminado = 0;
-		`, [id]);
-		return pedido;
+		const connection = await pool.getConnection();
+		try {
+			await connection.beginTransaction();
+			const [pedido]: any = await pool.query(`
+				SELECT
+				pedido_venta.id AS id,
+				pedido_venta.idcliente AS idcliente,
+				pedido_venta.fechaPedido,
+				pedido_venta.nroComprobante,
+				pedido_venta.formaPago,
+				pedido_venta.observaciones,
+				pedido_venta.totalPedido,
+				pedido_venta.eliminado,
+				cliente.id AS cliente_id,
+				cliente.cuit,
+				cliente.razonSocial
+				FROM pedido_venta 
+				JOIN cliente 
+				ON pedido_venta.idcliente = cliente.id 
+				WHERE pedido_venta.id = ? AND pedido_venta.eliminado = 0;
+			`, [id]);
+
+			const cliente = {
+				id: pedido[0].idcliente,
+				cuit: pedido[0].cuit,
+				razonSocial: pedido[0].razonSocial
+			}
+			const finalPedido = new PedidoVenta(
+				pedido[0].id, 
+				cliente, 
+				pedido[0].fechaPedido, 
+				pedido[0].nroComprobante, 
+				pedido[0].formaPago, 
+				pedido[0].observaciones,
+				pedido[0].totalPedido
+			)
+
+			await connection.commit();
+			return finalPedido;
+		} catch (e) {
+			await connection.rollback();
+			return e
+		} finally {
+			connection.release();
+		}
 	}
 
 	static async getByDate(dates) {
-		console.log("FECHAS: ", dates.fromDate);
-		const pedido = await pool.query('SELECT * FROM pedido_venta WHERE fechaPedido BETWEEN ? AND ? AND eliminado = 0;', [dates.fromDate, dates.toDate]);
-		return pedido;
+		const connection = await pool.getConnection();
+		try {
+			await connection.beginTransaction();
+			console.log("FECHAS: ", dates.fromDate);
+			const [pedidos]: any = await pool.query(`
+				SELECT 
+				pedido_venta.id AS id,
+				pedido_venta.idcliente AS idcliente,
+				pedido_venta.fechaPedido,
+				pedido_venta.nroComprobante,
+				pedido_venta.formaPago,
+				pedido_venta.observaciones,
+				pedido_venta.totalPedido,
+				pedido_venta.eliminado,
+				cliente.id AS cliente_id,
+				cliente.cuit,
+				cliente.razonSocial
+				FROM pedido_venta 
+				JOIN cliente 
+				ON pedido_venta.idcliente = cliente.id 
+				WHERE fechaPedido BETWEEN ? AND ? AND eliminado = 0;
+				`, [dates.fromDate, dates.toDate]);
+			
+			console.log("PEDIDO POR FECHA: ", pedidos)
+
+			const listapedidos:PedidoVenta[] = [];
+		
+			pedidos.map((pedido) => {
+	
+				const cliente = {
+					id: pedido.idcliente,
+					cuit: pedido.cuit,
+					razonSocial: pedido.razonSocial
+				}
+	
+				listapedidos.push(
+					new PedidoVenta(
+						pedido.id, 
+						cliente, 
+						pedido.fechaPedido, 
+						pedido.nroComprobante, 
+						pedido.formaPago, 
+						pedido.observaciones, 
+						pedido.totalPedido
+					)
+				)	
+			})
+
+			await connection.commit();
+			return listapedidos;
+		} catch (e) {
+			await connection.rollback();
+			return e;
+		} finally {
+			connection.release();
+		}
 	}
 
 	static async editById(id: number, data) {
-		const connection = await pool.getConnection(); // Obtén una conexión individual del pool
+		const connection = await pool.getConnection();
 		try {
-			await connection.beginTransaction(); // Inicia la transacción
+			await connection.beginTransaction();
 	
 			const cambios = await connection.query(
 				`UPDATE pedido_venta
@@ -92,16 +205,16 @@ export default class PedidoVenta {
 				]
 			);
 	
-			await connection.commit(); // Confirma los cambios
+			await connection.commit();
 			console.log("Resultados del Query: ", cambios);
 	
 			return cambios;
 		} catch (e) {
-			await connection.rollback(); // Revierte los cambios en caso de error
+			await connection.rollback();
 			console.error("Error en la transacción, se hizo rollback:", e);
-			throw e; // Re-lanza el error para manejo externo
+			throw e;
 		} finally {
-			connection.release(); // Libera la conexión de vuelta al pool
+			connection.release();
 		}
 	}
 
@@ -130,11 +243,11 @@ export default class PedidoVenta {
 	}
 
 	static async deleteById(idPedido) {
-		const connection = await pool.getConnection(); // Obtén una conexión del pool
+		const connection = await pool.getConnection();
 		console.log("Pedido: ", idPedido);
 	
 		try {
-			await connection.beginTransaction(); // Inicia la transacción
+			await connection.beginTransaction();
 			console.log("Ejecutando query delete pedido...");
 	
 			const query = `
@@ -146,14 +259,14 @@ export default class PedidoVenta {
 			const pedidoEliminado = await connection.query(query, [idPedido]);
 			console.log("Resultado DELETE pedido: ", pedidoEliminado);
 	
-			await connection.commit(); // Confirma los cambios
+			await connection.commit();
 			return pedidoEliminado;
 		} catch (e) {
-			await connection.rollback(); // Revierte los cambios en caso de error
+			await connection.rollback();
 			console.error("Error en la transacción DELETE pedido: ", e);
-			throw e; // Re-lanza el error para manejo externo
+			throw e;
 		} finally {
-			connection.release(); // Libera la conexión de vuelta al pool
+			connection.release(); 
 		}
 	}
 }

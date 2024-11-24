@@ -8,16 +8,42 @@ window.onload = async () => {
 		// Limpiar el contenido actual del tbody (opcional)
 		tbody.innerHTML = '';
 
-		console.log("Lista de pedidos", pedidosList)
+		console.log("Lista de pedidos: ", pedidosList)
 
 		// Iterar sobre los pedidos y crear filas
-		pedidosList.forEach((pedido) => {
-			const row = document.createElement('tr');
+		if (pedidosList.length > 1 || pedidosList.pedidosByDate) {
+			console.log("Entra a pedidos list: ", pedidosList)
+			pedidosList.forEach((pedido) => {
+				const row = document.createElement('tr');
 
+				// Crear y agregar celdas a la fila
+				row.innerHTML = `
+				<td data-id="${pedido.id}" id="id" class="p-4 border border-slate-500">${pedido.id}</td>
+				<td data-id="${pedido.id}" id="idcliente" class="p-4 border border-slate-500">${pedido.cliente.id}</td>
+				<td data-id="${pedido.id}" id="fechaPedido" class="p-4 border border-slate-500">${new Date(pedido.fechaPedido).toLocaleDateString()}</td>
+				<td data-id="${pedido.id}" id="nroComprobante" class="p-4 border border-slate-500">${pedido.nroComprobante}</td>
+				<td data-id="${pedido.id}" id="formaPago" class="p-4 border border-slate-500">${pedido.formaPago}</td>
+				<td data-id="${pedido.id}" id="observaciones" class="p-4 border border-slate-500">${pedido.observaciones}</td>
+				<td data-id="${pedido.id}" id="totalPedido" class="p-4 border border-slate-500">${pedido.totalPedido}</td>
+				<td class="p-4 border border-slate-500">
+					<div class="flex gap-2">
+						<button class="p-2 bg-gray-200" id="editPedido" data-id="${pedido.id}">Editar</button>
+						<button class="p-2 bg-gray-200" onclick="generatePdf(${pedido.id})" data-id="${pedido.id}">PDF</button>
+						<button class="p-2 bg-gray-200" onclick="deletePedidoById(${pedido.id})" data-id="${pedido.id}">Eliminar</button>		
+					</div>
+				</td>`;
+
+				// Agregar la fila al tbody
+				tbody.appendChild(row);
+			});
+		} else {
+			console.log("NO entra a pedidos list: ", pedidosList)
+			const row = document.createElement('tr');
+			const pedido = pedidosList;
 			// Crear y agregar celdas a la fila
 			row.innerHTML = `
 			<td data-id="${pedido.id}" id="id" class="p-4 border border-slate-500">${pedido.id}</td>
-			<td data-id="${pedido.id}" id="idcliente" class="p-4 border border-slate-500">${pedido.idcliente}</td>
+			<td data-id="${pedido.id}" id="idcliente" class="p-4 border border-slate-500">${pedido.cliente.id}</td>
 			<td data-id="${pedido.id}" id="fechaPedido" class="p-4 border border-slate-500">${new Date(pedido.fechaPedido).toLocaleDateString()}</td>
 			<td data-id="${pedido.id}" id="nroComprobante" class="p-4 border border-slate-500">${pedido.nroComprobante}</td>
 			<td data-id="${pedido.id}" id="formaPago" class="p-4 border border-slate-500">${pedido.formaPago}</td>
@@ -33,7 +59,7 @@ window.onload = async () => {
 
 			// Agregar la fila al tbody
 			tbody.appendChild(row);
-		});
+		}
 
 	}
 
@@ -59,9 +85,12 @@ window.onload = async () => {
 			body: JSON.stringify({ id })
 		})
 
+		console.log(response)
 		const allPedidos = await response.json();
 
-		displayPedidos(allPedidos.allPedidos[0])
+		console.log("Todos los pedidos", allPedidos)
+
+		displayPedidos(allPedidos.allPedidos)
 		setPedidosButtons()
 		return allPedidos;
 
@@ -80,7 +109,7 @@ window.onload = async () => {
 		const allPedidosByDate = await response.json();
 		console.log("Pedidos por fecha recibidos: ", allPedidosByDate)
 
-		displayPedidos(allPedidosByDate.pedidosByDate[0])
+		displayPedidos(allPedidosByDate.pedidosByDate)
 		setPedidosButtons()
 		return allPedidosByDate;
 
@@ -104,18 +133,17 @@ window.onload = async () => {
 	}
 
 	// Obtener todos los pedidos
+	console.log("Llega aca")
 	const allPedidos = await getPedidos('');
-	console.log("Todos los pedidos: ", allPedidos);
 
 	// Parsear los datos de la respuesta
 	const data = await allPedidos;
 
 	// Extraer la lista de pedidos
-	const pedidos = data.allPedidos[0];
+	const pedidos = data.allPedidos;
 	displayPedidos(pedidos)
 
 	setPedidosButtons();
-
 }
 
 const editPedidoById = async (id) => {
@@ -135,12 +163,35 @@ const editPedidoById = async (id) => {
 	let observaciones = document.querySelector(`#observaciones[data-id='${id}']`).innerHTML;
 	let totalPedido = document.querySelector(`#totalPedido[data-id='${id}']`).innerHTML;
 
+	const renderDetalles = async () => {
+		listaDeDetalles.innerHTML = ''
+		const res = await fetch(`http://localhost:3001/api/getDetallesById/${id}`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
+		const { detalles } = await res.json();
+		console.log(detalles)
+
+		detalles.map((detalle) => {
+			const detallesActuales = listaDeDetalles.innerHTML;
+			listaDeDetalles.innerHTML = detallesActuales + `
+				<li data-id="${id}" data-cantidad="${cantidad}" data-producto="${detalle.idproducto}" data-subtotal="${detalle.subtotal}">
+					Id: ${detalle.detalleId} | Cantidad: ${detalle.cantidad} | Producto: ${detalle.idproducto} | Subtotal: ${detalle.subtotal} <span class="text-red-500 cursor-pointer" id="deleteDetalle" data-id="${detalle.detalleId}">[x]</span>
+				</li>
+			`;
+		})
+		return detalles;
+	}
+	const detallesDelPedido = await renderDetalles()
+
 	console.log("Fecha sin corregir: ", fechaPedido)
 	let [mes, dia, anio] = fechaPedido.split('/');
 	dia = dia.padStart(2, '0');
 	mes = mes.padStart(2, '0');
 	let fechaCorrecta = `${anio}-${mes}-${dia}`;
-	console.log("Fecha del pedido: ", fechaCorrecta) 
+	console.log("Fecha del pedido: ", fechaCorrecta)
 
 	// Lleno campos del formulario con los datos actuales
 	form.querySelector('input#idcliente').value = idcliente;
@@ -148,7 +199,15 @@ const editPedidoById = async (id) => {
 	form.querySelector('input#nroComprobante').value = nroComprobante;
 	form.querySelector('input#formaPago').value = formaPago;
 	form.querySelector('textarea#observaciones').value = observaciones;
-	form.querySelector('input#totalPedido').value = totalPedido;
+	
+	const updateTotal = () => {
+		console.log("Actualizando total...")
+		form.querySelector('input#totalPedido').value = detallesDelPedido
+			.map(detalle => parseFloat(detalle.subtotal))
+			.reduce((acc, subtotal) => acc + subtotal, 0)
+			.toFixed(2);
+	}
+	updateTotal();
 
 	form.onsubmit = async (e) => {
 		e.preventDefault();
@@ -194,14 +253,15 @@ const editPedidoById = async (id) => {
 	}
 }
 
-
 const createPedido = async () => {
 
+	
 	const popUp = document.getElementById('editPop');
 	const closeModal = popUp.querySelector('#closePop');
 	popUp.classList.remove('hidden');
-
+	
 	const form = popUp.querySelector('#editPedidoForm');
+	form.querySelector('ul#listaDeDetalles').innerHTML = '';
 
 	form.querySelector('input#idcliente').value = ''
 	form.querySelector('input#fechaPedido').value = ''
@@ -210,12 +270,12 @@ const createPedido = async () => {
 	form.querySelector('textarea#observaciones').value = ''
 	form.querySelector('input#totalPedido').value = ''
 
-	form.querySelector('div#detallesWrapper').classList.add('hidden')
+	detalles();
 
 	form.onsubmit = async (e) => {
 		e.preventDefault();
 		if (confirm("Confirmar?")) {
- 
+
 			const idcliente = form.querySelector('input#idcliente').value
 			const fechaPedido = form.querySelector('input#fechaPedido').value
 			const nroComprobante = form.querySelector('input#nroComprobante').value
@@ -223,8 +283,22 @@ const createPedido = async () => {
 			const observaciones = form.querySelector('textarea#observaciones').value
 			const totalPedido = form.querySelector('input#totalPedido').value
 
-			console.log(idcliente)
-			console.log("Formulario enviado")
+			const detallesList = form.querySelectorAll('ul#listaDeDetalles > li');
+			console.log("Lista de detalles:", detallesList)
+
+			const detallesListData = [];
+			Array.from(detallesList).map((detalle) => {
+				console.log("Detalle: ", detalle.dataset.id)
+				detallesListData.push({
+					id: detalle.dataset.id,
+					producto: detalle.dataset.producto,
+					cantidad: detalle.dataset.cantidad,
+					subtotal: detalle.dataset.subtotal
+				})
+			})
+
+			console.log("Lista de detalles: ", detallesListData)
+
 			const createdPedido = await fetch(`http://localhost:3001/api/createPedido/`, {
 				method: 'PUT',
 				headers: {
@@ -236,103 +310,117 @@ const createPedido = async () => {
 					nroComprobante,
 					formaPago,
 					observaciones,
-					totalPedido
+					totalPedido,
+					detallesListData
 				})
 			});
 
 			if (createdPedido.ok) {
+
 				const responseJson = await createdPedido.json();
+
+				// TODO: Cargar detalles en la DB
+				const createdPedidoId = responseJson[0].insertId
+				console.log("Id del pedido creado: ", createdPedidoId)
+				uploadCreatedPedidoDetalles(createdPedidoId, detallesListData);
+
 				console.log('Respuesta del servidor:', responseJson);
-				window.location.reload();
+				// window.location.reload();
 			}
 		}
 	}
-
-	// Funcion para el manejo de los detalles del pedido (Primero se crea el pedido y en editar se asignan los detalles)
-	// detalles(id)
 
 	closeModal.onclick = () => {
 		popUp.classList.add('hidden');
 	}
 }
 
+const uploadCreatedPedidoDetalles = async (pedidoId, listaDeDetalles) => {
+
+	console.log("Aca se van a subir los detalles", listaDeDetalles, " al pedido ", pedidoId)
+
+	const response = fetch(`http://localhost:3001/api/uploadPedidoDetalles/`, {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			listaDeDetalles,
+			pedidoId
+		})
+	})
+
+	const detallesCargados = await response.json();
+	console.log("Detalles Cargados: ", detallesCargados)
+}
+
 const detalles = async (pedidoId) => {
-
-	// Funcion para obtener todos los detalles del pedido
-	const listarDetalles = async (id) => {
-		const respuestaDetalles = await fetch(`http://localhost:3001/api/getDetallesById/${id}`, {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		});
-
-		const detalles = await respuestaDetalles.json();
-		console.log(detalles.detalles[0])
-
-		const listaDeDetalles = document.getElementById('listaDeDetalles');
-		listaDeDetalles.innerHTML = '';
-
-		console.log(listaDeDetalles)
-
-		detalles.detalles[0].map((detalle) => {
-			const itemDetalle = document.createElement('li');
-			itemDetalle.classList.add('py-2')
-			itemDetalle.innerHTML = 'Id: ' + detalle.id + ' | Cantidad: ' + detalle.cantidad + ' | Producto: ' + detalle.idproducto + ' | Subtotal: ' + detalle.subtotal + ' <span class="text-red-500 cursor-pointer" id="deleteDetalle" data-id="' + detalle.id + '">[x]</span>';
-
-			listaDeDetalles.appendChild(itemDetalle);
-		})
-
-		// Funcion para eliminar un detalle por id
-		console.log("Entra")
-		const deleteDetalleButtons = document.querySelectorAll('#deleteDetalle')
-		deleteDetalleButtons.forEach((deleteDetalleButton) => {
-			deleteDetalleButton.onclick = (e) => {
-				if (confirm("Eliminar detalle?")) {
-					const detalleIdToDelete = e.target.dataset.id;
-					deleteDetalleById(detalleIdToDelete).then(() => {
-						listarDetalles(pedidoId);
-					})
-				}
-			}
-		})
-	}
-	listarDetalles(pedidoId)
 
 	// Agregar un detalle desde el formulario
 	const addDetalle = document.getElementById('addDetalle')
-	addDetalle.onclick = () => {
-
+	addDetalle.onclick = async () => {
+		console.log("Creando detalle...")
 		const detalleForm = document.getElementById('detalleForm')
 		detalleForm.classList.remove('hidden')
 
-		// El id pedido venta siempre va a ser el del pedido que estamos editando
-		detalleForm.querySelector('input#idPedidoVenta').value = pedidoId;
+		const productos = await getAllProductos();
+
+		console.log("Productos: ", productos.allProductos[0])
+
+		const productosSelector = detalleForm.querySelector('select#producto')
+
+		if (!productosSelector.classList.contains('--rendered')) {
+			productosSelector.classList.add('--rendered')
+			productos.allProductos[0].forEach(producto => {
+				const option = document.createElement('option');
+				option.value = producto.id;
+				option.textContent = producto.denominacion;
+				productosSelector.appendChild(option);
+			});
+		}
+
+		detalleForm.querySelector('input#cantidad').addEventListener('input', updateSubtotal)
+		detalleForm.querySelector('select#producto').addEventListener('change', updateSubtotal)
+		function updateSubtotal() {
+			console.log("Actualizando subtotal...")
+			const cantidad = parseFloat(detalleForm.querySelector('input#cantidad').value) || 0;
+			const idProducto = detalleForm.querySelector('select#producto').value;
+			const producto = productos.allProductos[0].find(p => p.id == idProducto);
+			console.log("Producto seleccionado: ", producto)
+			const precioVenta = producto ? parseFloat(producto.precioVenta) : 0;
+
+			const subTotal = cantidad * precioVenta;
+			detalleForm.querySelector('input#subTotal').value = subTotal.toFixed(2);
+		}
+
 		detalleForm.querySelector('span#closeDetalleForm').onclick = () => {
 			detalleForm.classList.add('hidden')
 		}
 
-		console.log("Editando pedido: ", pedidoId)
-
 		detalleForm.onsubmit = (e) => {
 			e.preventDefault();
 
-			id = detalleForm.querySelector('input#id').value
-			idProducto = detalleForm.querySelector('input#idProducto').value
-			cantidad = detalleForm.querySelector('input#cantidad').value
-			subTotal = detalleForm.querySelector('input#subTotal').value
+			let id = detalleForm.querySelector('input#id').value
+			let idProducto = detalleForm.querySelector('select#producto').value
+			let cantidad = detalleForm.querySelector('input#cantidad').value
+			let subTotal = detalleForm.querySelector('input#subTotal').value
 
-			console.log("Datos form: ", id, pedidoId, idProducto, cantidad, subTotal)
+			console.log("Datos form: ", id, idProducto, cantidad, subTotal)
 
-			crearDetalle({ id, idPedidoVenta: pedidoId, idProducto, cantidad, subTotal }).then(() => {
-				// TODO: La llama pero en la segunda vez no actualiza el pedidoId por lo que carga los detalles en el 1er pedido editado
-				console.log("Pedido editado: ", pedidoId)
-				listarDetalles(pedidoId)
-			});;
+			const renderDetalle = (id, idProducto, cantidad, subTotal) => {
+				const listaDeDetalles = document.getElementById('listaDeDetalles');
+				const detallesActuales = listaDeDetalles.innerHTML;
+				listaDeDetalles.innerHTML = detallesActuales + `
+				<li data-id="${id}" data-cantidad="${cantidad}" data-producto="${idProducto}" data-subtotal="${subTotal}">
+					Id: ${id} | Cantidad: ${cantidad} | Producto: ${idProducto} | Subtotal: ${subTotal} <span class="text-red-500 cursor-pointer" id="deleteDetalle" data-id="${id}">[x]</span>
+				</li>
+				`;
+			}
+			renderDetalle(id, idProducto, cantidad, subTotal);
 
 			// Limpiamos el form, actualizamos lista de detalles y cerramos el modal
 			detalleForm.querySelector('input#id').value = ''
-			detalleForm.querySelector('input#idProducto').value = ''
+			detalleForm.querySelector('select#producto').option = 0
 			detalleForm.querySelector('input#cantidad').value = ''
 			detalleForm.querySelector('input#subTotal').value = ''
 			detalleForm.classList.add('hidden')
@@ -340,18 +428,19 @@ const detalles = async (pedidoId) => {
 
 	}
 
-
 }
 
-const crearDetalle = async (detalle) => {
-	console.log("Detalle enviado al back: ", detalle)
-	const detalleCreado = await fetch(`http://localhost:3001/api/insertDetalle`, {
-		method: 'PUT',
+const getAllProductos = async () => {
+	const response = await fetch(`http://localhost:3001/api/getAllProductos`, {
+		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify({ detalle })
-	})
+	});
+
+	const allProductos = response.json();
+
+	return allProductos;
 }
 
 const deleteDetalleById = async (id) => {
@@ -392,7 +481,7 @@ const generatePdf = async (pedidoId) => {
 
 	// Obtenemos los detalles del pediddo
 	const res = await fetch(`http://localhost:3001/api/getDetallesById/${pedidoId}`, {
-		method: 'PUT',
+		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
 		},
