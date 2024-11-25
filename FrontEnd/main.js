@@ -163,6 +163,8 @@ const editPedidoById = async (id) => {
 	let observaciones = document.querySelector(`#observaciones[data-id='${id}']`).innerHTML;
 	let totalPedido = document.querySelector(`#totalPedido[data-id='${id}']`).innerHTML;
 
+	console.log("Total Pedido: ", totalPedido)
+
 	const renderDetalles = async () => {
 		listaDeDetalles.innerHTML = ''
 		const res = await fetch(`http://localhost:3001/api/getDetallesById/${id}`, {
@@ -184,7 +186,20 @@ const editPedidoById = async (id) => {
 		})
 		return detalles;
 	}
-	const detallesDelPedido = await renderDetalles()
+
+	const deletedDetallesIDs = [];
+	renderDetalles().then(() => {
+		const deleteDetalleButtons = document.querySelectorAll('li:not(.--not-registered-yet) > #deleteDetalle');
+		console.log("Botones de eliminar: ", deleteDetalleButtons)
+		Array.from(deleteDetalleButtons).map((button) => {
+			console.log("Boton de eliminar: ", button)
+			button.onclick = () => {
+				console.log("Detalle ", button.dataset.id, " se va a eliminar")
+				deletedDetallesIDs.push(button.dataset.id)
+				button.parentElement.remove();
+			}
+		})
+	})
 
 	console.log("Fecha sin corregir: ", fechaPedido)
 	let [mes, dia, anio] = fechaPedido.split('/');
@@ -199,15 +214,8 @@ const editPedidoById = async (id) => {
 	form.querySelector('input#nroComprobante').value = nroComprobante;
 	form.querySelector('input#formaPago').value = formaPago;
 	form.querySelector('textarea#observaciones').value = observaciones;
-	
-	const updateTotal = () => {
-		console.log("Actualizando total...")
-		form.querySelector('input#totalPedido').value = detallesDelPedido
-			.map(detalle => parseFloat(detalle.subtotal))
-			.reduce((acc, subtotal) => acc + subtotal, 0)
-			.toFixed(2);
-	}
-	updateTotal();
+	form.querySelector('input#totalPedido').value = totalPedido;
+
 
 	form.onsubmit = async (e) => {
 		e.preventDefault();
@@ -220,8 +228,12 @@ const editPedidoById = async (id) => {
 			observaciones = form.querySelector('textarea#observaciones').value
 			totalPedido = form.querySelector('input#totalPedido').value
 
+			console.log("Detalles eliminados: ", deletedDetallesIDs)
+			deletedDetallesIDs.map((id) => deleteDetalleById(id))
+
 			console.log(idcliente)
 			console.log("Formulario enviado")
+
 			const editedPedido = await fetch(`http://localhost:3001/api/editPedido/${id}`, {
 				method: 'PUT',
 				headers: {
@@ -239,6 +251,23 @@ const editPedidoById = async (id) => {
 
 			if (editedPedido.ok) {
 				const responseJson = await editedPedido.json();
+
+				const detallesList = form.querySelectorAll('ul#listaDeDetalles > li');
+				console.log("Lista de detalles:", detallesList)
+
+				const detallesListData = [];
+				Array.from(detallesList).map((detalle) => {
+					console.log("Detalle: ", detalle.dataset.id)
+					detallesListData.push({
+						id: detalle.dataset.id,
+						producto: detalle.dataset.producto,
+						cantidad: detalle.dataset.cantidad,
+						subtotal: detalle.dataset.subtotal
+					})
+				})
+
+				uploadCreatedPedidoDetalles(id, detallesListData);
+
 				console.log('Respuesta del servidor:', responseJson);
 				window.location.reload();
 			}
@@ -246,7 +275,7 @@ const editPedidoById = async (id) => {
 	}
 
 	// Funcion para el manejo de los detalles del pedido
-	detalles(id)
+	await detalles(id)
 
 	closeModal.onclick = () => {
 		popUp.classList.add('hidden');
@@ -254,7 +283,6 @@ const editPedidoById = async (id) => {
 }
 
 const createPedido = async () => {
-
 	
 	const popUp = document.getElementById('editPop');
 	const closeModal = popUp.querySelector('#closePop');
@@ -270,7 +298,7 @@ const createPedido = async () => {
 	form.querySelector('textarea#observaciones').value = ''
 	form.querySelector('input#totalPedido').value = ''
 
-	detalles();
+	await detalles()
 
 	form.onsubmit = async (e) => {
 		e.preventDefault();
@@ -321,11 +349,12 @@ const createPedido = async () => {
 
 				// TODO: Cargar detalles en la DB
 				const createdPedidoId = responseJson[0].insertId
+
 				console.log("Id del pedido creado: ", createdPedidoId)
 				uploadCreatedPedidoDetalles(createdPedidoId, detallesListData);
 
 				console.log('Respuesta del servidor:', responseJson);
-				// window.location.reload();
+				window.location.reload();
 			}
 		}
 	}
@@ -407,14 +436,18 @@ const detalles = async (pedidoId) => {
 
 			console.log("Datos form: ", id, idProducto, cantidad, subTotal)
 
+			const listaDeDetalles = document.getElementById('listaDeDetalles');
 			const renderDetalle = (id, idProducto, cantidad, subTotal) => {
-				const listaDeDetalles = document.getElementById('listaDeDetalles');
-				const detallesActuales = listaDeDetalles.innerHTML;
-				listaDeDetalles.innerHTML = detallesActuales + `
-				<li data-id="${id}" data-cantidad="${cantidad}" data-producto="${idProducto}" data-subtotal="${subTotal}">
-					Id: ${id} | Cantidad: ${cantidad} | Producto: ${idProducto} | Subtotal: ${subTotal} <span class="text-red-500 cursor-pointer" id="deleteDetalle" data-id="${id}">[x]</span>
-				</li>
+				const tempDiv = document.createElement('div');
+				tempDiv.innerHTML = `
+					<li class="--not-registered-yet" data-id="${id}" data-cantidad="${cantidad}" data-producto="${idProducto}" data-subtotal="${subTotal}">
+						Id: ${id} | Cantidad: ${cantidad} | Producto: ${idProducto} | Subtotal: ${subTotal} 
+						<span class="text-red-500 cursor-pointer" id="deleteDetalle" data-id="${id}">[x]</span>
+					</li>
 				`;
+
+				// Usamos el primer hijo del contenedor temporal
+				listaDeDetalles.appendChild(tempDiv.firstElementChild);
 			}
 			renderDetalle(id, idProducto, cantidad, subTotal);
 
@@ -424,9 +457,39 @@ const detalles = async (pedidoId) => {
 			detalleForm.querySelector('input#cantidad').value = ''
 			detalleForm.querySelector('input#subTotal').value = ''
 			detalleForm.classList.add('hidden')
+
+			const lis = Array.from(listaDeDetalles.querySelectorAll('#listaDeDetalles > li'));
+			console.log("LISTA: ", lis)
+			const updateTotal = () => {
+				const form = document.querySelector('#editPedidoForm');
+				console.log("Actualizando total...")
+				form.querySelector('input#totalPedido').value = lis
+					.map(detalle => {
+						const subtotal = parseFloat(detalle.dataset.subtotal);
+						console.log(subtotal);
+						return subtotal;
+					})
+					.reduce((acc, subtotal) => {
+						console.log("ACC", acc, "SUBTOTAL", subtotal);
+						return acc + subtotal;
+					}, 0);
+			}
+			updateTotal();
+
+			// Borra solo del HTML de los elementos que todavia no estan guardados en la DB
+			const deleteDetalleButtons = document.querySelectorAll('.--not-registered-yet > #deleteDetalle');
+			console.log("Botones de eliminar sin registrar: ", deleteDetalleButtons)
+			Array.from(deleteDetalleButtons).map((button) => {
+				console.log("Boton de eliminar: ", button)
+				button.onclick = () => {
+					button.parentElement.remove();
+				}
+			})
 		}
 
 	}
+
+	return;
 
 }
 

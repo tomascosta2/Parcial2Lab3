@@ -74,6 +74,7 @@ app.put('/api/insertDetalle', (req, res) => __awaiter(void 0, void 0, void 0, fu
 // Eliminar un detalle
 app.put('/api/deleteDetalle/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
+    console.log("Eliminando detalle ", id, "...");
     const detalleEliminado = yield PedidoVentaDetalle.deleteDetalle(id);
     res.json({ detalleEliminado });
 }));

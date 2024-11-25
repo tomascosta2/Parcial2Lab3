@@ -91,6 +91,7 @@ app.put('/api/insertDetalle', async (req: Request, res: Response) => {
 app.put('/api/deleteDetalle/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
 
+  console.log("Eliminando detalle ", id, "...")
   const detalleEliminado = await PedidoVentaDetalle.deleteDetalle(id);
 
   res.json({ detalleEliminado });
