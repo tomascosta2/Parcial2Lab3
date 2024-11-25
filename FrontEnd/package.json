@@ -1,0 +1,13 @@
+{
+	"name": "tu-proyecto",
+	"version": "1.0.0",
+	"description": "Tu descripción del proyecto",
+	"main": "dist/main.js",
+	"scripts": {
+		"build": "tsc",
+		"start": "node dist/main.js"
+	},
+	"devDependencies": {
+		"typescript": "^4.9.5"
+	}
+}
