@@ -47,54 +47,110 @@ window.onload = async () => {
         });
     };
     const getPedidos = async (id = '') => {
-        const response = await fetch('http://localhost:3001/api/getAll', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ id })
-        });
-        console.log(response);
-        const allPedidos = await response.json();
-        console.log("Todos los pedidos", allPedidos);
-        displayPedidos(allPedidos.allPedidos);
-        setPedidosButtons();
-        return allPedidos;
+        try {
+            const response = await fetch('http://localhost:3001/api/getAll', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id }),
+            });
+            if (!response.ok) {
+                throw new Error(`Error en la solicitud: ${response.statusText}`);
+            }
+            const data = await response.json();
+            console.log("Todos los pedidos recibidos: ", data.allPedidos);
+            let pedidosList = [];
+            if (!Array.isArray(data.allPedidos)) {
+                pedidosList = [data.allPedidos];
+            }
+            else {
+                pedidosList = data.allPedidos;
+            }
+            const pedidos = pedidosList.map((pedido) => ({
+                id: pedido.id,
+                cliente: {
+                    id: pedido.cliente.id,
+                    cuit: pedido.cliente.cuit,
+                    razonSocial: pedido.cliente.razonSocial
+                },
+                fechaPedido: pedido.fechaPedido,
+                nroComprobante: pedido.nroComprobante,
+                formaPago: pedido.formaPago,
+                observaciones: pedido.observaciones,
+                totalPedido: pedido.totalPedido,
+            }));
+            console.log("PEDIDOS CLIENTES ETC", pedidos);
+            // Renderizar los pedidos y configurar los botones
+            displayPedidos(pedidos);
+            setPedidosButtons();
+            return pedidos;
+        }
+        catch (error) {
+            console.error('Error obteniendo los pedidos:', error);
+            return [];
+        }
     };
     const getPedidosByDate = async (dates) => {
-        const response = await fetch('http://localhost:3001/api/getPedidosByDate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ dates })
-        });
-        const allPedidosByDate = await response.json();
-        console.log("Pedidos por fecha recibidos: ", allPedidosByDate);
-        displayPedidos(allPedidosByDate.pedidosByDate);
-        setPedidosButtons();
-        return allPedidosByDate;
+        try {
+            const response = await fetch('http://localhost:3001/api/getPedidosByDate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ dates }),
+            });
+            if (!response.ok) {
+                throw new Error(`Error en la solicitud: ${response.statusText}`);
+            }
+            const data = await response.json();
+            // Suponemos que el backend devuelve un objeto con la propiedad 'pedidosByDate'
+            console.log("Pedidos por fecha recibidos: ", data.pedidosByDate);
+            const pedidos = data.pedidosByDate.map((pedido) => ({
+                id: pedido.id,
+                cliente: {
+                    id: pedido.cliente.id
+                },
+                fechaPedido: pedido.fechaPedido,
+                nroComprobante: pedido.nroComprobante,
+                formaPago: pedido.formaPago,
+                observaciones: pedido.observaciones,
+                totalPedido: pedido.totalPedido,
+            }));
+            console.log(pedidos);
+            // Renderizamos los pedidos en la interfaz
+            displayPedidos(pedidos);
+            setPedidosButtons();
+            return pedidos;
+        }
+        catch (error) {
+            console.error('Error obteniendo los pedidos por fecha:', error);
+            return [];
+        }
     };
     const searchByIdForm = document.getElementById('searchByIdForm');
     searchByIdForm.onsubmit = async (e) => {
         e.preventDefault();
         const idToSearch = searchByIdForm.querySelector('input').value;
-        getPedidos(idToSearch);
+        const pedidos = await getPedidos(idToSearch); // Ahora devuelve directamente un array de Pedido
+        displayPedidos(pedidos); // Mostrar los pedidos en la interfaz
     };
     const searchByDatesForm = document.getElementById('searchByDates');
     console.log("Fechas form", searchByDatesForm);
-    searchByDatesForm.onsubmit = (e) => {
+    searchByDatesForm.onsubmit = async (e) => {
         e.preventDefault();
         const fromDate = searchByDatesForm.querySelector('input#from').value;
         const toDate = searchByDatesForm.querySelector('input#to').value;
         console.log("Buscando desde ", fromDate, " hasta ", toDate);
-        getPedidosByDate({ fromDate, toDate });
+        const pedidos = await getPedidosByDate({ fromDate, toDate }); // Ahora devuelve directamente un array de Pedido
+        displayPedidos(pedidos); // Mostrar los pedidos en la interfaz
     };
     console.log("Llega aca");
     const allPedidos = await getPedidos('');
-    const data = await allPedidos;
-    const pedidos = data.allPedidos;
+    //const data = await allPedidos;
+    const pedidos = await getPedidos(''); // Obtener todos los pedidos
     displayPedidos(pedidos);
+    console.log("Pedidos: ", pedidos);
     setPedidosButtons();
 };
 const editPedidoById = async (id) => {
