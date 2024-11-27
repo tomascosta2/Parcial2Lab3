@@ -1,3 +1,5 @@
+// import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+
 interface Cliente {
 	id: number;
 }
@@ -95,26 +97,26 @@ window.onload = async () => {
 
 			console.log("Todos los pedidos recibidos: ", data);
 			let pedidosList = [];
-			if(!Array.isArray(data.allPedidos)){
+			if (!Array.isArray(data.allPedidos)) {
 				pedidosList = [data.allPedidos];
-			}else{
+			} else {
 				pedidosList = data.allPedidos;
 			}
 
 			const pedidos: Pedido[] = pedidosList.map((pedido: any) => ({
 				id: pedido.id,
 				cliente: {
-                    id: pedido.cliente.id,
+					id: pedido.cliente.id,
 					cuit: pedido.cliente.cuit,
 					razonSocial: pedido.cliente.razonSocial
-                },
+				},
 				fechaPedido: pedido.fechaPedido,
 				nroComprobante: pedido.nroComprobante,
 				formaPago: pedido.formaPago,
 				observaciones: pedido.observaciones,
 				totalPedido: pedido.totalPedido,
 			}));
-			console.log("PEDIDOS CLIENTES ETC",pedidos);
+			console.log("PEDIDOS CLIENTES ETC", pedidos);
 			// Renderizar los pedidos y configurar los botones
 			displayPedidos(pedidos);
 			setPedidosButtons();
@@ -147,7 +149,7 @@ window.onload = async () => {
 
 			const pedidos: Pedido[] = data.pedidosByDate.map((pedido: any) => ({
 				id: pedido.id,
-				cliente: { 
+				cliente: {
 					id: pedido.cliente.id
 				},
 				fechaPedido: pedido.fechaPedido,
@@ -170,10 +172,10 @@ window.onload = async () => {
 
 	const searchByIdForm = document.getElementById('searchByIdForm') as HTMLFormElement;
 	searchByIdForm.onsubmit = async (e) => {
-	e.preventDefault();
-	const idToSearch = (searchByIdForm.querySelector('input') as HTMLInputElement).value;
-	  const pedidos = await getPedidos(idToSearch); // Ahora devuelve directamente un array de Pedido
-	  displayPedidos(pedidos); // Mostrar los pedidos en la interfaz
+		e.preventDefault();
+		const idToSearch = (searchByIdForm.querySelector('input') as HTMLInputElement).value;
+		const pedidos = await getPedidos(idToSearch); // Ahora devuelve directamente un array de Pedido
+		displayPedidos(pedidos); // Mostrar los pedidos en la interfaz
 	};
 
 	const searchByDatesForm = document.getElementById('searchByDates') as HTMLFormElement;
@@ -585,18 +587,71 @@ const deletePedidoById = async (id: number) => {
 
 const generatePdf = async (pedidoId: number) => {
 	console.log("Id a generar pdf: ", pedidoId);
+
+	// Obtener los datos del pedido desde la API
 	const response = await fetch(`http://localhost:3001/api/getAll`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify({ id: pedidoId })
+		body: JSON.stringify({ id: pedidoId }),
 	});
+
 	const pedido = await response.json();
 	console.log("Pedido encontrado: ", pedido);
 
+	// Crear contenido dinámico para el PDF
+	const pdfContent = `
+		<div class="pdf-content">
+		<h1>Pedido de Venta</h1>
+		<p><strong>ID Pedido:</strong> ${pedido.allPedidos.id}</p>
+		<p><strong>Cliente:</strong> ${pedido.allPedidos.cliente.razonSocial} (${pedido.allPedidos.cliente.cuit})</p>
+		<p><strong>Fecha:</strong> ${new Date(pedido.allPedidos.fechaPedido).toLocaleDateString()}</p>
+		<p><strong>Total:</strong> $${pedido.allPedidos.totalPedido}</p>
 
-	
+		<h2>Detalles del Pedido</h2>
+		<table>
+			<thead>
+			<tr>
+				<th>Detalle ID</th>
+				<th>Producto</th>
+				<th>Cantidad</th>
+				<th>Subtotal</th>
+			</tr>
+			</thead>
+			<tbody>
+			${pedido.allPedidos.detalles.map((detalle: { detalleId: any; idproducto: any; cantidad: any; subtotal: any; }) => `
+				<tr>
+				<td>${detalle.detalleId}</td>
+				<td>${detalle.idproducto}</td>
+				<td>${detalle.cantidad}</td>
+				<td>$${detalle.subtotal}</td>
+				</tr>
+			`).join('')}
+			</tbody>
+		</table>
+		</div>
+	`;
+
+	// Abrir nueva ventana y renderizar contenido
+	const printWindow = window.open('', '_blank');
+	printWindow?.document.write(`
+		<html>
+			<head>
+			<title>Pedido ${pedido.allPedidos.id}</title>
+			<style>
+					${document.querySelector('style')?.innerHTML || ''}
+			</style>
+			</head>
+			<body>${pdfContent}</body>
+		</html>
+		`);
+	printWindow?.document.close();
+	printWindow?.focus();
+
+	// Activar el diálogo de impresión (permite guardar como PDF)
+	printWindow?.print();
+	printWindow?.close();
 };
 
 const testing = () => {

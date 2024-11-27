@@ -1,4 +1,5 @@
 "use strict";
+// import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 window.onload = async () => {
     const displayPedidos = (pedidosList) => {
         var _a;
@@ -482,16 +483,68 @@ const deletePedidoById = async (id) => {
     }
 };
 const generatePdf = async (pedidoId) => {
+    var _a;
     console.log("Id a generar pdf: ", pedidoId);
+    // Obtener los datos del pedido desde la API
     const response = await fetch(`http://localhost:3001/api/getAll`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id: pedidoId })
+        body: JSON.stringify({ id: pedidoId }),
     });
     const pedido = await response.json();
     console.log("Pedido encontrado: ", pedido);
+    // Crear contenido dinámico para el PDF
+    const pdfContent = `
+		<div class="pdf-content">
+		<h1>Pedido de Venta</h1>
+		<p><strong>ID Pedido:</strong> ${pedido.allPedidos.id}</p>
+		<p><strong>Cliente:</strong> ${pedido.allPedidos.cliente.razonSocial} (${pedido.allPedidos.cliente.cuit})</p>
+		<p><strong>Fecha:</strong> ${new Date(pedido.allPedidos.fechaPedido).toLocaleDateString()}</p>
+		<p><strong>Total:</strong> $${pedido.allPedidos.totalPedido}</p>
+
+		<h2>Detalles del Pedido</h2>
+		<table>
+			<thead>
+			<tr>
+				<th>Detalle ID</th>
+				<th>Producto</th>
+				<th>Cantidad</th>
+				<th>Subtotal</th>
+			</tr>
+			</thead>
+			<tbody>
+			${pedido.allPedidos.detalles.map((detalle) => `
+				<tr>
+				<td>${detalle.detalleId}</td>
+				<td>${detalle.idproducto}</td>
+				<td>${detalle.cantidad}</td>
+				<td>$${detalle.subtotal}</td>
+				</tr>
+			`).join('')}
+			</tbody>
+		</table>
+		</div>
+	`;
+    // Abrir nueva ventana y renderizar contenido
+    const printWindow = window.open('', '_blank');
+    printWindow === null || printWindow === void 0 ? void 0 : printWindow.document.write(`
+		<html>
+			<head>
+			<title>Pedido ${pedido.allPedidos.id}</title>
+			<style>
+					${((_a = document.querySelector('style')) === null || _a === void 0 ? void 0 : _a.innerHTML) || ''}
+			</style>
+			</head>
+			<body>${pdfContent}</body>
+		</html>
+		`);
+    printWindow === null || printWindow === void 0 ? void 0 : printWindow.document.close();
+    printWindow === null || printWindow === void 0 ? void 0 : printWindow.focus();
+    // Activar el diálogo de impresión (permite guardar como PDF)
+    printWindow === null || printWindow === void 0 ? void 0 : printWindow.print();
+    printWindow === null || printWindow === void 0 ? void 0 : printWindow.close();
 };
 const testing = () => {
     console.log("Testeando...");
