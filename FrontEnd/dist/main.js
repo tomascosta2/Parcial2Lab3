@@ -59,7 +59,7 @@ window.onload = async () => {
                 throw new Error(`Error en la solicitud: ${response.statusText}`);
             }
             const data = await response.json();
-            console.log("Todos los pedidos recibidos: ", data.allPedidos);
+            console.log("Todos los pedidos recibidos: ", data);
             let pedidosList = [];
             if (!Array.isArray(data.allPedidos)) {
                 pedidosList = [data.allPedidos];
@@ -145,9 +145,7 @@ window.onload = async () => {
         const pedidos = await getPedidosByDate({ fromDate, toDate }); // Ahora devuelve directamente un array de Pedido
         displayPedidos(pedidos); // Mostrar los pedidos en la interfaz
     };
-    console.log("Llega aca");
-    const allPedidos = await getPedidos('');
-    //const data = await allPedidos;
+    await getPedidos('');
     const pedidos = await getPedidos(''); // Obtener todos los pedidos
     displayPedidos(pedidos);
     console.log("Pedidos: ", pedidos);
@@ -169,6 +167,7 @@ const editPedidoById = async (id) => {
     console.log("Total Pedido: ", totalPedido);
     const renderDetalles = async () => {
         const listaDeDetalles = document.getElementById('listaDeDetalles');
+        // TODO: Obtener del pedido
         listaDeDetalles.innerHTML = '';
         const res = await fetch(`http://localhost:3001/api/getDetallesById/${id}`, {
             method: 'GET',
@@ -185,8 +184,8 @@ const editPedidoById = async (id) => {
             li.dataset.producto = detalle.idproducto.toString();
             li.dataset.subtotal = detalle.subtotal.toString();
             li.innerHTML = `
-		  Id: ${detalle.detalleId} | Cantidad: ${detalle.cantidad} | Producto: ${detalle.idproducto} | Subtotal: ${detalle.subtotal} <span class="text-red-500 cursor-pointer" id="deleteDetalle" data-id="${detalle.detalleId}">[x]</span>
-		`;
+				Id: ${detalle.detalleId} | Cantidad: ${detalle.cantidad} | Producto: ${detalle.idproducto} | Subtotal: ${detalle.subtotal} <span class="text-red-500 cursor-pointer" id="deleteDetalle" data-id="${detalle.detalleId}">[x]</span>
+			`;
             listaDeDetalles.appendChild(li);
         });
         return detalles;
@@ -493,36 +492,6 @@ const generatePdf = async (pedidoId) => {
     });
     const pedido = await response.json();
     console.log("Pedido encontrado: ", pedido);
-    const res = await fetch(`http://localhost:3001/api/getDetallesById/${pedidoId}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
-    const detalles = await res.json();
-    console.log("Generando PDF... ", detalles);
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text(`Pedido ID: ${pedidoId}`, 10, 10);
-    doc.setFontSize(12);
-    doc.text(`Cliente ID: ${pedido.allPedidos[0][0].idcliente}`, 10, 20);
-    doc.text(`Fecha: ${new Date(pedido.allPedidos[0][0].fechaPedido).toLocaleDateString()}`, 10, 30);
-    doc.text(`Forma de Pago: ${pedido.allPedidos[0][0].formaPago}`, 10, 40);
-    doc.text(`Observaciones: ${pedido.allPedidos[0][0].observaciones}`, 10, 50);
-    doc.text(`Total: $${pedido.allPedidos[0][0].totalPedido}`, 10, 60);
-    console.log(detalles.detalles[0]);
-    doc.autoTable({
-        startY: 70,
-        head: [['ID Producto', 'Nombre Producto', 'Cantidad', 'Subtotal']],
-        body: detalles.detalles[0].map((detalle) => [
-            detalle.idproducto,
-            detalle.productoDenominacion,
-            detalle.cantidad,
-            `$${detalle.subtotal}`,
-        ]),
-    });
-    doc.save(`Pedido_${pedidoId}.pdf`);
 };
 const testing = () => {
     console.log("Testeando...");

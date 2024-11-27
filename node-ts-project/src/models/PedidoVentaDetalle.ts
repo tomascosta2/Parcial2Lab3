@@ -23,7 +23,9 @@ export class PedidoVentaDetalle {
 		try {
 			await connection.beginTransaction();
 
-			const [detalles]: any = await pool.query(
+			console.log("Entra a getByPedidoVenta con id: ", idPedidoVenta)
+
+			const [detalles]: any = await connection.query(
 				`
 			SELECT 
 				pvd.id AS detalleId,

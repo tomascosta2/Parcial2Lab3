@@ -8,8 +8,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { pool } from '../db.js';
+import { PedidoVentaDetalle } from './PedidoVentaDetalle.js';
 export default class PedidoVenta {
-    constructor(id, cliente, fechaPedido, nroComprobante, formaPago, observaciones, totalPedido) {
+    constructor(id, cliente, fechaPedido, nroComprobante, formaPago, observaciones, totalPedido, detalles) {
         this.id = id;
         this.cliente = cliente;
         this.fechaPedido = fechaPedido;
@@ -17,6 +18,7 @@ export default class PedidoVenta {
         this.formaPago = formaPago;
         this.observaciones = observaciones;
         this.totalPedido = totalPedido;
+        this.detalles = detalles;
     }
     // Métodos para interactuar con la base de datos
     static getAll() {
@@ -39,17 +41,27 @@ export default class PedidoVenta {
 				cliente.razonSocial 
 				FROM pedido_venta 
 				JOIN cliente ON pedido_venta.idcliente = cliente.id 
-				WHERE eliminado = 0`);
+				WHERE eliminado = 0
+			`);
                 const listapedidos = [];
-                pedidos.map((pedido) => {
+                for (const pedido of pedidos) {
                     const cliente = {
                         id: pedido.idcliente,
                         cuit: pedido.cuit,
                         razonSocial: pedido.razonSocial
                     };
-                    listapedidos.push(new PedidoVenta(pedido.id, cliente, pedido.fechaPedido, pedido.nroComprobante, pedido.formaPago, pedido.observaciones, pedido.totalPedido));
-                });
-                console.log("Lista pedidos: ", listapedidos);
+                    console.log("Mapeando pedido:", pedido.id);
+                    try {
+                        const detalles = yield PedidoVentaDetalle.getByPedidoVenta(pedido.id);
+                        console.log("Detalles del pedido: ", detalles);
+                        listapedidos.push(new PedidoVenta(pedido.id, cliente, pedido.fechaPedido, pedido.nroComprobante, pedido.formaPago, pedido.observaciones, pedido.totalPedido, detalles));
+                        console.log("Pedido agregado a la lista: ", listapedidos[listapedidos.length - 1]);
+                    }
+                    catch (e) {
+                        console.log("Error mapeando pedido: ", e);
+                    }
+                }
+                console.log("Lista completa de pedidos: ", listapedidos);
                 yield connection.commit();
                 return listapedidos;
             }
@@ -87,7 +99,9 @@ export default class PedidoVenta {
                     cuit: pedido[0].cuit,
                     razonSocial: pedido[0].razonSocial
                 };
-                const finalPedido = new PedidoVenta(pedido[0].id, cliente, pedido[0].fechaPedido, pedido[0].nroComprobante, pedido[0].formaPago, pedido[0].observaciones, pedido[0].totalPedido);
+                const detalles = yield PedidoVentaDetalle.getByPedidoVenta(id);
+                console.log("Detalles del pedido: ", detalles);
+                const finalPedido = new PedidoVenta(pedido[0].id, cliente, pedido[0].fechaPedido, pedido[0].nroComprobante, pedido[0].formaPago, pedido[0].observaciones, pedido[0].totalPedido, detalles);
                 yield connection.commit();
                 return finalPedido;
             }
@@ -132,7 +146,18 @@ export default class PedidoVenta {
                         cuit: pedido.cuit,
                         razonSocial: pedido.razonSocial
                     };
-                    listapedidos.push(new PedidoVenta(pedido.id, cliente, pedido.fechaPedido, pedido.nroComprobante, pedido.formaPago, pedido.observaciones, pedido.totalPedido));
+                    // TODO: descomentar y corregir
+                    // listapedidos.push(
+                    // 	new PedidoVenta(
+                    // 		pedido.id, 
+                    // 		cliente, 
+                    // 		pedido.fechaPedido, 
+                    // 		pedido.nroComprobante, 
+                    // 		pedido.formaPago, 
+                    // 		pedido.observaciones, 
+                    // 		pedido.totalPedido
+                    // 	)
+                    // )	
                 });
                 yield connection.commit();
                 return listapedidos;

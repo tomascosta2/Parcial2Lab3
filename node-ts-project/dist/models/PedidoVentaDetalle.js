@@ -21,7 +21,8 @@ export class PedidoVentaDetalle {
             const connection = yield pool.getConnection();
             try {
                 yield connection.beginTransaction();
-                const [detalles] = yield pool.query(`
+                console.log("Entra a getByPedidoVenta con id: ", idPedidoVenta);
+                const [detalles] = yield connection.query(`
 			SELECT 
 				pvd.id AS detalleId,
 				pvd.idpedidoventa,
