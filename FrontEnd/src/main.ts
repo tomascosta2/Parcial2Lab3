@@ -1,36 +1,70 @@
-// import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-
-interface Cliente {
+class Cliente {
 	id: number;
+	cuit: string;
+	razonSocial: string;
+  
+	constructor(id: number, cuit: string, razonSocial: string) {
+	  this.id = id;
+	  this.cuit = cuit;
+	  this.razonSocial = razonSocial;
+	}
 }
-
-interface Pedido {
+class PedidoVenta {
 	id: number;
 	cliente: Cliente;
-	fechaPedido: string;
-	nroComprobante: string;
+	fechaPedido: Date;
+	nroComprobante: number;
 	formaPago: string;
 	observaciones: string;
 	totalPedido: number;
+	detalles: PedidoVentaDetalle[];
+
+	constructor(id: number, cliente: Cliente, fechaPedido: Date, nroComprobante: number, formaPago: string, observaciones: string, totalPedido: number, detalles: PedidoVentaDetalle[]) {
+		this.id = id;
+		this.cliente = cliente;
+		this.fechaPedido = fechaPedido;
+		this.nroComprobante = nroComprobante;
+		this.formaPago = formaPago;
+		this.observaciones = observaciones;
+		this.totalPedido = totalPedido;
+		this.detalles = detalles;
+	}
 }
 
-interface Detalle {
-	detalleId: number;
-	idproducto: number;
-	cantidad: number;
-	subtotal: number;
-	productoDenominacion?: string;
-}
 
-interface Producto {
+class PedidoVentaDetalle {
 	id: number;
-	denominacion: string;
+	pedidoVenta: PedidoVenta;
+	producto: Producto;
+	cantidad: string;
+	subtotal: string;
+
+	constructor(id: number, pedidoVenta: PedidoVenta, producto: Producto, cantidad: string, subtotal: string) {
+		this.id = id;
+		this.pedidoVenta = pedidoVenta;
+		this.producto = producto;
+		this.cantidad = cantidad;
+		this.subtotal = subtotal;
+	}
+}
+
+class Producto {
+	id: number;
+	codigoProducto: string;
+	denominacion: number;
 	precioVenta: number;
+
+	constructor(id: number, codigoProducto: string, denominacion: number, precioVenta: number) {
+		this.id = id;
+		this.codigoProducto = codigoProducto;
+		this.denominacion = denominacion;
+		this.precioVenta = precioVenta;
+	}
 }
 
 
 window.onload = async () => {
-	const displayPedidos = (pedidosList: Pedido[] | Pedido) => {
+	const displayPedidos = (pedidosList: PedidoVenta[] | PedidoVenta) => {
 		const tbody = document.getElementById('pedidosTable')?.querySelector('tbody');
 		if (!tbody) return;
 
@@ -38,7 +72,7 @@ window.onload = async () => {
 
 		console.log("Lista de pedidos: ", pedidosList);
 
-		const renderPedido = (pedido: Pedido) => {
+		const renderPedido = (pedido: PedidoVenta) => {
 			const row = document.createElement('tr');
 			row.innerHTML = `
 		  <td data-id="${pedido.id}" id="id" class="p-4 border border-slate-500">${pedido.id}</td>
@@ -79,7 +113,7 @@ window.onload = async () => {
 		});
 	};
 
-	const getPedidos = async (id: string = ''): Promise<Pedido[]> => {
+	const getPedidos = async (id: string = ''): Promise<PedidoVenta[]> => {
 		try {
 			const response = await fetch('http://localhost:3001/api/getAll', {
 				method: 'POST',
@@ -103,19 +137,8 @@ window.onload = async () => {
 				pedidosList = data.allPedidos;
 			}
 
-			const pedidos: Pedido[] = pedidosList.map((pedido: any) => ({
-				id: pedido.id,
-				cliente: {
-					id: pedido.cliente.id,
-					cuit: pedido.cliente.cuit,
-					razonSocial: pedido.cliente.razonSocial
-				},
-				fechaPedido: pedido.fechaPedido,
-				nroComprobante: pedido.nroComprobante,
-				formaPago: pedido.formaPago,
-				observaciones: pedido.observaciones,
-				totalPedido: pedido.totalPedido,
-			}));
+			const pedidos: PedidoVenta[] = pedidosList;
+
 			console.log("PEDIDOS CLIENTES ETC", pedidos);
 			// Renderizar los pedidos y configurar los botones
 			displayPedidos(pedidos);
@@ -128,7 +151,7 @@ window.onload = async () => {
 		}
 	};
 
-	const getPedidosByDate = async (dates: { fromDate: string; toDate: string }): Promise<Pedido[]> => {
+	const getPedidosByDate = async (dates: { fromDate: string; toDate: string }): Promise<PedidoVenta[]> => {
 		try {
 			const response = await fetch('http://localhost:3001/api/getPedidosByDate', {
 				method: 'POST',
@@ -147,17 +170,7 @@ window.onload = async () => {
 			// Suponemos que el backend devuelve un objeto con la propiedad 'pedidosByDate'
 			console.log("Pedidos por fecha recibidos: ", data.pedidosByDate);
 
-			const pedidos: Pedido[] = data.pedidosByDate.map((pedido: any) => ({
-				id: pedido.id,
-				cliente: {
-					id: pedido.cliente.id
-				},
-				fechaPedido: pedido.fechaPedido,
-				nroComprobante: pedido.nroComprobante,
-				formaPago: pedido.formaPago,
-				observaciones: pedido.observaciones,
-				totalPedido: pedido.totalPedido,
-			}));
+			const pedidos: PedidoVenta[] = data.pedidosByDate;
 			console.log(pedidos);
 			// Renderizamos los pedidos en la interfaz
 			displayPedidos(pedidos);
@@ -221,6 +234,7 @@ const editPedidoById = async (id: number) => {
 		const listaDeDetalles = document.getElementById('listaDeDetalles') as HTMLUListElement;
 		// TODO: Obtener del pedido
 		listaDeDetalles.innerHTML = '';
+		
 		const res = await fetch(`http://localhost:3001/api/getDetallesById/${id}`, {
 			method: 'GET',
 			headers: {
@@ -230,9 +244,9 @@ const editPedidoById = async (id: number) => {
 		const { detalles } = await res.json();
 		console.log(detalles);
 
-		detalles.forEach((detalle: Detalle) => {
+		detalles.forEach((detalle: any) => {
 			const li = document.createElement('li');
-			li.dataset.id = id.toString();
+			li.dataset.id = detalle.detalleId;
 			li.dataset.cantidad = detalle.cantidad.toString();
 			li.dataset.producto = detalle.idproducto.toString();
 			li.dataset.subtotal = detalle.subtotal.toString();
@@ -460,7 +474,7 @@ const detalles = async (pedidoId?: number) => {
 			productos.allProductos[0].forEach((producto: Producto) => {
 				const option = document.createElement('option');
 				option.value = producto.id.toString();
-				option.textContent = producto.denominacion;
+				option.textContent = producto.denominacion.toString();
 				productosSelector.appendChild(option);
 			});
 		}

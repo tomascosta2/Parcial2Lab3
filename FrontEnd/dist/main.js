@@ -1,5 +1,40 @@
 "use strict";
-// import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+class Cliente {
+    constructor(id, cuit, razonSocial) {
+        this.id = id;
+        this.cuit = cuit;
+        this.razonSocial = razonSocial;
+    }
+}
+class PedidoVenta {
+    constructor(id, cliente, fechaPedido, nroComprobante, formaPago, observaciones, totalPedido, detalles) {
+        this.id = id;
+        this.cliente = cliente;
+        this.fechaPedido = fechaPedido;
+        this.nroComprobante = nroComprobante;
+        this.formaPago = formaPago;
+        this.observaciones = observaciones;
+        this.totalPedido = totalPedido;
+        this.detalles = detalles;
+    }
+}
+class PedidoVentaDetalle {
+    constructor(id, pedidoVenta, producto, cantidad, subtotal) {
+        this.id = id;
+        this.pedidoVenta = pedidoVenta;
+        this.producto = producto;
+        this.cantidad = cantidad;
+        this.subtotal = subtotal;
+    }
+}
+class Producto {
+    constructor(id, codigoProducto, denominacion, precioVenta) {
+        this.id = id;
+        this.codigoProducto = codigoProducto;
+        this.denominacion = denominacion;
+        this.precioVenta = precioVenta;
+    }
+}
 window.onload = async () => {
     const displayPedidos = (pedidosList) => {
         var _a;
@@ -68,19 +103,7 @@ window.onload = async () => {
             else {
                 pedidosList = data.allPedidos;
             }
-            const pedidos = pedidosList.map((pedido) => ({
-                id: pedido.id,
-                cliente: {
-                    id: pedido.cliente.id,
-                    cuit: pedido.cliente.cuit,
-                    razonSocial: pedido.cliente.razonSocial
-                },
-                fechaPedido: pedido.fechaPedido,
-                nroComprobante: pedido.nroComprobante,
-                formaPago: pedido.formaPago,
-                observaciones: pedido.observaciones,
-                totalPedido: pedido.totalPedido,
-            }));
+            const pedidos = pedidosList;
             console.log("PEDIDOS CLIENTES ETC", pedidos);
             // Renderizar los pedidos y configurar los botones
             displayPedidos(pedidos);
@@ -107,17 +130,7 @@ window.onload = async () => {
             const data = await response.json();
             // Suponemos que el backend devuelve un objeto con la propiedad 'pedidosByDate'
             console.log("Pedidos por fecha recibidos: ", data.pedidosByDate);
-            const pedidos = data.pedidosByDate.map((pedido) => ({
-                id: pedido.id,
-                cliente: {
-                    id: pedido.cliente.id
-                },
-                fechaPedido: pedido.fechaPedido,
-                nroComprobante: pedido.nroComprobante,
-                formaPago: pedido.formaPago,
-                observaciones: pedido.observaciones,
-                totalPedido: pedido.totalPedido,
-            }));
+            const pedidos = data.pedidosByDate;
             console.log(pedidos);
             // Renderizamos los pedidos en la interfaz
             displayPedidos(pedidos);
@@ -180,7 +193,7 @@ const editPedidoById = async (id) => {
         console.log(detalles);
         detalles.forEach((detalle) => {
             const li = document.createElement('li');
-            li.dataset.id = id.toString();
+            li.dataset.id = detalle.detalleId;
             li.dataset.cantidad = detalle.cantidad.toString();
             li.dataset.producto = detalle.idproducto.toString();
             li.dataset.subtotal = detalle.subtotal.toString();
@@ -373,7 +386,7 @@ const detalles = async (pedidoId) => {
             productos.allProductos[0].forEach((producto) => {
                 const option = document.createElement('option');
                 option.value = producto.id.toString();
-                option.textContent = producto.denominacion;
+                option.textContent = producto.denominacion.toString();
                 productosSelector.appendChild(option);
             });
         }

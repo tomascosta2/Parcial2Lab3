@@ -140,25 +140,23 @@ export default class PedidoVenta {
 				`, [dates.fromDate, dates.toDate]);
                 console.log("PEDIDO POR FECHA: ", pedidos);
                 const listapedidos = [];
-                pedidos.map((pedido) => {
+                for (const pedido of pedidos) {
                     const cliente = {
                         id: pedido.idcliente,
                         cuit: pedido.cuit,
                         razonSocial: pedido.razonSocial
                     };
-                    // TODO: descomentar y corregir
-                    // listapedidos.push(
-                    // 	new PedidoVenta(
-                    // 		pedido.id, 
-                    // 		cliente, 
-                    // 		pedido.fechaPedido, 
-                    // 		pedido.nroComprobante, 
-                    // 		pedido.formaPago, 
-                    // 		pedido.observaciones, 
-                    // 		pedido.totalPedido
-                    // 	)
-                    // )	
-                });
+                    console.log("Mapeando pedido:", pedido.id);
+                    try {
+                        const detalles = yield PedidoVentaDetalle.getByPedidoVenta(pedido.id);
+                        console.log("Detalles del pedido: ", detalles);
+                        listapedidos.push(new PedidoVenta(pedido.id, cliente, pedido.fechaPedido, pedido.nroComprobante, pedido.formaPago, pedido.observaciones, pedido.totalPedido, detalles));
+                        console.log("Pedido agregado a la lista: ", listapedidos[listapedidos.length - 1]);
+                    }
+                    catch (e) {
+                        console.log("Error mapeando pedido: ", e);
+                    }
+                }
                 yield connection.commit();
                 return listapedidos;
             }
@@ -236,6 +234,13 @@ export default class PedidoVenta {
 			`;
                 const pedidoEliminado = yield connection.query(query, [idPedido]);
                 console.log("Resultado DELETE pedido: ", pedidoEliminado);
+                const deleteDetallesFromDeletedPedidoQuery = `
+				UPDATE pedido_venta_detalle
+				SET eliminado = 1
+				WHERE idpedidoventa = ?;
+			`;
+                const detallesEliminados = yield connection.query(deleteDetallesFromDeletedPedidoQuery, [idPedido]);
+                console.log("Resultado DELETE detalles del pedido eliminado: ", detallesEliminados);
                 yield connection.commit();
                 return pedidoEliminado;
             }

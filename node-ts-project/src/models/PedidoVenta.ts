@@ -168,27 +168,33 @@ export default class PedidoVenta {
 
 			const listapedidos: PedidoVenta[] = [];
 
-			pedidos.map((pedido) => {
-
+			for (const pedido of pedidos) {
 				const cliente = {
 					id: pedido.idcliente,
 					cuit: pedido.cuit,
 					razonSocial: pedido.razonSocial
-				}
+				};
 
-				// TODO: descomentar y corregir
-				// listapedidos.push(
-				// 	new PedidoVenta(
-				// 		pedido.id, 
-				// 		cliente, 
-				// 		pedido.fechaPedido, 
-				// 		pedido.nroComprobante, 
-				// 		pedido.formaPago, 
-				// 		pedido.observaciones, 
-				// 		pedido.totalPedido
-				// 	)
-				// )	
-			})
+				console.log("Mapeando pedido:", pedido.id);
+				try {
+					const detalles: any = await PedidoVentaDetalle.getByPedidoVenta(pedido.id);
+					console.log("Detalles del pedido: ", detalles);
+
+					listapedidos.push(new PedidoVenta(
+						pedido.id,
+						cliente,
+						pedido.fechaPedido,
+						pedido.nroComprobante,
+						pedido.formaPago,
+						pedido.observaciones,
+						pedido.totalPedido,
+						detalles
+					));
+					console.log("Pedido agregado a la lista: ", listapedidos[listapedidos.length - 1]);
+				} catch (e) {
+					console.log("Error mapeando pedido: ", e);
+				}
+			}
 
 			await connection.commit();
 			return listapedidos;
@@ -273,6 +279,14 @@ export default class PedidoVenta {
 
 			const pedidoEliminado = await connection.query(query, [idPedido]);
 			console.log("Resultado DELETE pedido: ", pedidoEliminado);
+
+			const deleteDetallesFromDeletedPedidoQuery = `
+				UPDATE pedido_venta_detalle
+				SET eliminado = 1
+				WHERE idpedidoventa = ?;
+			`;
+			const detallesEliminados = await connection.query(deleteDetallesFromDeletedPedidoQuery, [idPedido]);
+			console.log("Resultado DELETE detalles del pedido eliminado: ", detallesEliminados);
 
 			await connection.commit();
 			return pedidoEliminado;
